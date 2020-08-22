@@ -82,7 +82,7 @@ class BintrayPublish : Plugin<Project> {
                                     id.set("core")
                                     name.set("Cedric Hippmann")
                                     url.set("https://github.com/chippmann")
-                                    email.set("cedric.hippmann@hotmail.com")
+                                    email.set("cedric@hippmann.ch")
                                 }
                                 developer {
                                     id.set("core")
