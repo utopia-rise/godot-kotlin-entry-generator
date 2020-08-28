@@ -37,7 +37,7 @@ open class DefaultValueExtractor(
             return "%L" to arrayOf("null")
         }
         val defaultValue = getDefaultValueTemplateStringWithTemplateArguments(propertyDescriptor.assignmentPsi)
-            ?: throw IllegalStateException("No default value could be extracted for the property ${propertyDescriptor.name} with the expression: ${propertyDescriptor.findPsi()?.text} This is a bug (but possibly originated by wrong default value usage on your side). Please report it so we can fix it")
+            ?: throw IllegalStateException("No default value could be extracted for the property ${propertyDescriptor.name} with the expression:\n${propertyDescriptor.findPsi()?.text}\nThis is a bug (but possibly originated by wrong default value usage on your side). Please report it so we can fix it")
         val params = mutableListOf<Any>()
         params.add(ClassName("godot.core", "Variant"))
         params.addAll(defaultValue.second)
@@ -47,7 +47,7 @@ open class DefaultValueExtractor(
     protected fun getDefaultValueTemplateStringWithTemplateArguments(
         expression: KtExpression
     ): Pair<String, Array<out Any>>? {
-        when {
+        return when {
             //normal constant expression like: val foo = 1
             expression is KtConstantExpression -> KtConstantExpressionExtractor.extract(expression)
             //string assignments but no string templations like ("${someVarToPutInString}"): val foo = "this is awesome"
@@ -63,9 +63,8 @@ open class DefaultValueExtractor(
             expression is KtOperationReferenceExpression -> KtOperationReferenceExpressionExtractor.extract(expression)
             //EnumArray -> int to enum mapping function
             expression is KtLambdaExpression && expression.parents.firstOrNull { it is KtNameReferenceExpression || it is KtCallExpression } != null -> KtLambdaExpressionExtractor.extract(bindingContext, expression)
+            else -> null
         }
-
-        return null
     }
 
     private fun checkHintAnnotationUsage() {
