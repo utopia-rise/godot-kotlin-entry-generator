@@ -1,7 +1,5 @@
-package godot.entrygenerator.generator.provider
+package godot.entrygenerator.generator.property.hintstring
 
-import com.squareup.kotlinpoet.ClassName
-import godot.entrygenerator.exceptions.WrongAnnotationUsageException
 import godot.entrygenerator.extension.*
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
@@ -10,27 +8,11 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.isEnum
 
-class ArrayRegistrationValuesHandler(
+class ArrayHintStringGenerator(
     propertyDescriptor: PropertyDescriptor,
     bindingContext: BindingContext
-) : RegistrationValuesHandler(propertyDescriptor, bindingContext) {
-    override fun getPropertyTypeHint(): ClassName {
-        return when (propertyHintAnnotation?.fqName?.asString()) {
-            null -> ClassName("godot.gdnative.godot_property_hint", "GODOT_PROPERTY_HINT_NONE")
-            else -> throw WrongAnnotationUsageException(propertyDescriptor, propertyHintAnnotation)
-        }
-    }
+) : PropertyHintStringGenerator(propertyDescriptor, bindingContext) {
 
-    override fun getDefaultValue(): Pair<String, Array<out Any>> {
-        return if (propertyDescriptor.type.arguments.firstOrNull()?.type?.isEnum() == true) {
-            if (propertyDescriptor.isLateInit || !isVisibleInEditor()) {
-                return "%L" to arrayOf("null")
-            }
-            getDefaultValueExpression(propertyDescriptor.assignmentPsi) ?: throw IllegalStateException("") //TODO: error
-        } else {
-            super.getDefaultValue()
-        }
-    }
 
     /**
      * Hint string array formatting: https://github.com/godotengine/godot/blob/00949f0c5fcc6a4f8382a4a97d5591fd9ec380f8/editor/editor_properties_array_dict.cpp

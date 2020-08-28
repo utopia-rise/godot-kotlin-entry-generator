@@ -5,7 +5,7 @@ import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 
-fun transformTypeDeclarationsToClassWithMember(
+fun transformTypeDeclarationsToClassWithMembers(
     classes: Set<ClassDescriptor>,
     properties: Set<PropertyDescriptor>,
     functions: Set<FunctionDescriptor>,

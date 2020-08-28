@@ -1,28 +1,27 @@
 package godot.entrygenerator
 
-import godot.entrygenerator.filebuilder.EntryFileBuilder
+import godot.entrygenerator.filebuilder.EntryFileBuilderProvider
 import godot.entrygenerator.generator.GdnsGenerator
-import godot.entrygenerator.transformer.transformTypeDeclarationsToClassWithMember
+import godot.entrygenerator.transformer.transformTypeDeclarationsToClassWithMembers
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.resolve.BindingContext
 
-class EntryGenerator(bindingContext: BindingContext) {
-
-    private val entryFileBuilder = EntryFileBuilder(bindingContext)
+object EntryGenerator {
 
     fun generateEntryFile(
+        generationType: EntryGenerationType,
+        bindingContext: BindingContext,
         outputPath: String,
         classes: Set<ClassDescriptor>,
         properties: Set<PropertyDescriptor>,
         functions: Set<FunctionDescriptor>,
         signals: Set<PropertyDescriptor>
     ) {
-
-        entryFileBuilder
+        EntryFileBuilderProvider.provideEntryFileBuilder(generationType, bindingContext)
             .registerClassesWithMembers(
-                transformTypeDeclarationsToClassWithMember(
+                transformTypeDeclarationsToClassWithMembers(
                     classes,
                     properties,
                     functions,
@@ -34,10 +33,10 @@ class EntryGenerator(bindingContext: BindingContext) {
 
     fun generateGdnsFiles(
         outputPath: String,
-        gdnLibFile: String,
+        gdnLibFilePath: String,
         cleanGeneratedGdnsFiles: Boolean,
         classes: Set<ClassDescriptor>
     ) {
-        GdnsGenerator.generateGdnsFiles(outputPath, gdnLibFile, cleanGeneratedGdnsFiles, classes)
+        GdnsGenerator.generateGdnsFiles(outputPath, gdnLibFilePath, cleanGeneratedGdnsFiles, classes)
     }
 }

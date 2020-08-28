@@ -1,4 +1,4 @@
-package godot.entrygenerator.generator
+package godot.entrygenerator.generator.signal
 
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FunSpec
@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.psi.KtValueArgumentList
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.source.KotlinSourceElement
 
-object SignalRegistrationGenerator {
+class SignalRegistrationGenerator {
 
     fun registerSignals(
         signals: List<PropertyDescriptor>,

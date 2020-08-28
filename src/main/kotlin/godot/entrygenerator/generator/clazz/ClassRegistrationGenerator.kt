@@ -1,4 +1,4 @@
-package godot.entrygenerator.generator
+package godot.entrygenerator.generator.clazz
 
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FunSpec
@@ -8,10 +8,38 @@ import godot.entrygenerator.model.ClassWithMembers
 import godot.entrygenerator.model.REGISTER_CLASS_ANNOTATION
 import godot.entrygenerator.model.REGISTER_CLASS_ANNOTATION_TOOL_ARGUMENT
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.descriptors.FunctionDescriptor
+import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 
-object ClassRegistrationGenerator {
+abstract class ClassRegistrationGenerator {
+
+    abstract fun provideRegisterClassControlFlow(
+        classWithMembers: ClassWithMembers,
+        classRegistryControlFlow: FunSpec.Builder,
+        className: ClassName,
+        superClass: String,
+        isTool: Boolean
+    ): FunSpec.Builder
+
+    abstract fun registerFunctions(
+        functions: List<FunctionDescriptor>,
+        registerClassControlFlow: FunSpec.Builder,
+        className: ClassName
+    )
+
+    abstract fun registerSignals(
+        signals: List<PropertyDescriptor>,
+        registerClassControlFlow: FunSpec.Builder
+    )
+
+    abstract fun registerProperties(
+        properties: List<PropertyDescriptor>,
+        registerClassControlFlow: FunSpec.Builder,
+        className: ClassName,
+        bindingContext: BindingContext
+    )
 
     fun registerClasses(
         classesWithMembers: Set<ClassWithMembers>,
@@ -24,25 +52,22 @@ object ClassRegistrationGenerator {
             val className = ClassName(packagePath, classNameAsString)
             val superClass = classWithMembers.classDescriptor.getSuperTypeNameAsString()
 
-            val registerClassControlFlow = classRegistryControlFlow.beginControlFlow(
-                "registerClass(%S,·%S,·%L,·${isTool(classWithMembers.classDescriptor)})·{",
-                classWithMembers.classDescriptor.fqNameSafe.asString(),
-                superClass,
-                className.constructorReference()
+            val registerClassControlFlow = provideRegisterClassControlFlow(
+                classWithMembers, classRegistryControlFlow, className, superClass, isTool(classWithMembers.classDescriptor)
             ) //START: registerClass
 
-            FunctionRegistrationGenerator.registerFunctions(
+            registerFunctions(
                 classWithMembers.functions,
                 registerClassControlFlow,
                 className
             )
 
-            SignalRegistrationGenerator.registerSignals(
+            registerSignals(
                 classWithMembers.signals,
                 registerClassControlFlow
             )
 
-            PropertyRegistrationGenerator.registerProperties(
+            registerProperties(
                 classWithMembers.properties,
                 registerClassControlFlow,
                 className,

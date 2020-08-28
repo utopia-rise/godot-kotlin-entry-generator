@@ -1,28 +1,13 @@
-package godot.entrygenerator.generator.provider
+package godot.entrygenerator.generator.property.hintstring
 
-import com.squareup.kotlinpoet.ClassName
 import godot.entrygenerator.exceptions.WrongAnnotationUsageException
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.resolve.BindingContext
 
-class CoreTypeRegistrationValuesHandler(
+class CoreTypeHintStringGenerator(
     propertyDescriptor: PropertyDescriptor,
     bindingContext: BindingContext
-) : RegistrationValuesHandler(propertyDescriptor, bindingContext) {
-
-    override fun getPropertyTypeHint(): ClassName {
-
-        return when (propertyHintAnnotation?.fqName?.asString()) {
-            "godot.annotation.ColorNoAlpha" ->
-                ClassName("godot.gdnative.godot_property_hint", "GODOT_PROPERTY_HINT_COLOR_NO_ALPHA")
-            //TODO: implement ImageCompressLossy
-            //TODO: implement ImageCompressLossLess
-            //TODO: implement NodePathToEditedNode
-            //TODO: implement NodePathValidTypes
-            null -> ClassName("godot.gdnative.godot_property_hint", "GODOT_PROPERTY_HINT_NONE")
-            else -> throw WrongAnnotationUsageException(propertyDescriptor, propertyHintAnnotation)
-        }
-    }
+) : PropertyHintStringGenerator(propertyDescriptor, bindingContext) {
 
     override fun getHintString(): String {
         return when (propertyHintAnnotation?.fqName?.asString()) {

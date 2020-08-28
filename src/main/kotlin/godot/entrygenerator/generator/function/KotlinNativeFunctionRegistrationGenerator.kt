@@ -1,45 +1,34 @@
-package godot.entrygenerator.generator
+package godot.entrygenerator.generator.function
 
 import com.squareup.kotlinpoet.ClassName
-import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.MemberName.Companion.member
 import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.asTypeName
-import godot.entrygenerator.extension.getAnnotationValue
 import godot.entrygenerator.extension.getFirstRegistrableTypeAsFqNameStringOrNull
-import godot.entrygenerator.mapper.RpcModeAnnotationMapper.mapRpcModeAnnotationToClassName
-import godot.entrygenerator.model.REGISTER_FUNCTION_ANNOTATION
-import godot.entrygenerator.model.REGISTER_FUNCTION_ANNOTATION_RPC_MODE_ARGUMENT
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.js.descriptorUtils.getJetTypeFqName
-import org.jetbrains.kotlin.name.ClassId
-import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.supertypes
 
-object FunctionRegistrationGenerator {
+class KotlinNativeFunctionRegistrationGenerator : FunctionRegistrationGenerator() {
+    override fun getStringTemplate(functionDescriptor: FunctionDescriptor): String {
+        val variantToTypeConverterList = getVariantTypeConverterList(functionDescriptor)
+        val typeToVariantConverter = getTypeToVariantConverter(functionDescriptor)
+        return getFunctionTemplateString(functionDescriptor, typeToVariantConverter.first, variantToTypeConverterList.first)
+    }
 
-    fun registerFunctions(
-        functions: List<FunctionDescriptor>,
-        registerClassControlFlow: FunSpec.Builder,
-        className: ClassName
-    ) {
-        functions.forEach { functionDescriptor ->
-            val variantToTypeConverterList = getVariantTypeConverterList(functionDescriptor)
-            val typeToVariantConverter = getTypeToVariantConverter(functionDescriptor)
-            registerClassControlFlow
-                .addStatement(
-                    getFunctionTemplateString(functionDescriptor, typeToVariantConverter.first, variantToTypeConverterList.first),
-                    functionDescriptor.name,
-                    mapRpcModeAnnotationToClassName(getRpcModeEnum(functionDescriptor)),
-                    className.member(functionDescriptor.name.asString()).reference(),
-                    typeToVariantConverter.second,
-                    *variantToTypeConverterList.second
-                )
-        }
+    override fun getTemplateArgs(functionDescriptor: FunctionDescriptor, className: ClassName): List<Any> {
+        val variantToTypeConverterList = getVariantTypeConverterList(functionDescriptor)
+        val typeToVariantConverter = getTypeToVariantConverter(functionDescriptor)
+        return listOf(
+            functionDescriptor.name,
+            getRpcModeEnum(functionDescriptor),
+            className.member(functionDescriptor.name.asString()).reference(),
+            typeToVariantConverter.second,
+            *variantToTypeConverterList.second
+        )
     }
 
     private fun getFunctionTemplateString(
@@ -52,23 +41,6 @@ object FunctionRegistrationGenerator {
         } else {
             "function(%S,·%T,·%L,·$typeToVariantConverter,·$variantToTypeConverterList)"
         }
-    }
-
-    private fun getRpcModeEnum(functionDescriptor: FunctionDescriptor): String {
-        val compilerRpcModeEnumRepresentation = getCompilerRpcModeEnumRepresentation(functionDescriptor)
-        val packagePath = compilerRpcModeEnumRepresentation.first.asString().replace("/", ".")
-        val name = compilerRpcModeEnumRepresentation.second
-        return "$packagePath.$name"
-    }
-
-    private fun getCompilerRpcModeEnumRepresentation(functionDescriptor: FunctionDescriptor): Pair<ClassId, Name> {
-        return functionDescriptor
-            .annotations
-            .getAnnotationValue(
-                REGISTER_FUNCTION_ANNOTATION,
-                REGISTER_FUNCTION_ANNOTATION_RPC_MODE_ARGUMENT,
-                Pair(ClassId(FqName("godot.MultiplayerAPI"), Name.identifier("RPCMode")), Name.identifier("DISABLED"))
-            )
     }
 
     private fun getVariantTypeConverterList(functionDescriptor: FunctionDescriptor): Pair<String, Array<TypeName>> {

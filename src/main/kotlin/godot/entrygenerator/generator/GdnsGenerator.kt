@@ -18,10 +18,10 @@ object GdnsGenerator {
             ?: emptyList()
 
         val classNames = classes.map { clazz -> clazz.name.asString() }
-        val obsoleteGdnsFiles = existingGdnsFiles
-            .filter { !classNames.contains(it.name) }
 
         if (cleanGeneratedGdnsFiles) {
+            val obsoleteGdnsFiles = existingGdnsFiles
+                .filter { !classNames.contains(it.name) }
             obsoleteGdnsFiles.forEach {
                 it.delete()
             }

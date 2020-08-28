@@ -1,7 +1,5 @@
 package godot.entrygenerator.extension
 
-fun String.isString() = this == "kotlin.String"
-
 fun String.isGodotPrimitive() =
     when (this) {
         "kotlin.Int",
