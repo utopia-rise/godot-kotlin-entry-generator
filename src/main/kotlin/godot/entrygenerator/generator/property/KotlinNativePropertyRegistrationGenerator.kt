@@ -4,6 +4,7 @@ import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.MemberName.Companion.member
 import com.squareup.kotlinpoet.asTypeName
+import godot.entrygenerator.EntryGenerationType
 import godot.entrygenerator.extension.getFirstRegistrableTypeAsFqNameStringOrNull
 import godot.entrygenerator.generator.property.defaultvalue.DefaultValueExtractorProvider
 import godot.entrygenerator.generator.property.hintstring.PropertyHintStringGeneratorProvider
@@ -87,7 +88,7 @@ class KotlinNativePropertyRegistrationGenerator : PropertyRegistrationGenerator(
                 *defaultValueStringTemplateValues,
                 shouldBeVisibleInEditor(propertyDescriptor),
                 RpcModeAnnotationMapper.mapRpcModeAnnotationToClassName(getRpcModeEnum(propertyDescriptor)),
-                PropertyTypeHintProvider.provide(propertyDescriptor),
+                PropertyTypeHintProvider.provide(propertyDescriptor, EntryGenerationType.KOTLIN_NATIVE),
                 hintString
             )
     }

@@ -2,15 +2,13 @@ package godot.entrygenerator.generator.function
 
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
-import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.MemberName.Companion.member
-import godot.entrygenerator.extension.isCoreType
+import godot.entrygenerator.extension.toKtVariantConversionFunctionName
+import godot.entrygenerator.extension.toKtVariantType
 import org.jetbrains.kotlin.backend.common.serialization.findPackage
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.js.descriptorUtils.getJetTypeFqName
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
-import org.jetbrains.kotlin.types.KotlinType
-import org.jetbrains.kotlin.types.typeUtil.*
 
 class JvmFunctionRegistrationGenerator : FunctionRegistrationGenerator() {
 
@@ -26,7 +24,7 @@ class JvmFunctionRegistrationGenerator : FunctionRegistrationGenerator() {
             if (functionDescriptor.valueParameters.isNotEmpty()) {
                 functionDescriptor.valueParameters.forEach { valueParameter ->
                     val ktVariantClassName = ClassName("godot.core", "KtVariant")
-                    val conversionFunction = ktVariantClassName.member(kotlinTypeToKtVariantConversionFunctionName(valueParameter.type)).reference()
+                    val conversionFunction = ktVariantClassName.member(valueParameter.type.toKtVariantConversionFunctionName()).reference()
                     add(conversionFunction)
                 }
                 add(getArgsDsl(functionDescriptor))
@@ -82,8 +80,9 @@ class JvmFunctionRegistrationGenerator : FunctionRegistrationGenerator() {
     }
 
     private fun getReturnType(functionDescriptor: FunctionDescriptor): ClassName {
-        val returnType = functionDescriptor.returnType
-        return kotlinTypeToKtVariantType(returnType)
+        return functionDescriptor
+            .returnType
+            .toKtVariantType()
     }
 
     private fun getArgsDsl(functionDescriptor: FunctionDescriptor): CodeBlock {
@@ -109,7 +108,7 @@ class JvmFunctionRegistrationGenerator : FunctionRegistrationGenerator() {
             argsCodeBlock
                 .beginControlFlow(controlFlowString)
                 .addStatement("name = %S", argument.name)
-                .addStatement("type = %T", kotlinTypeToKtVariantType(argument.type))
+                .addStatement("type = %T", argument.type.toKtVariantType())
                 .addStatement("className = %S", argument.type.getJetTypeFqName(false).substringAfterLast("."))
                 .endControlFlow()
         }
@@ -119,33 +118,5 @@ class JvmFunctionRegistrationGenerator : FunctionRegistrationGenerator() {
         }
 
         return argsCodeBlock.build()
-    }
-
-    private fun kotlinTypeToKtVariantType(kotlinType: KotlinType?): ClassName {
-        return when {
-            kotlinType == null -> throw IllegalStateException("Type is null")
-            kotlinType.isUnit() -> ClassName("godot.core.KtVariant.Type", "NIL")
-            kotlinType.isInt() || kotlinType.isLong() -> ClassName("godot.core.KtVariant.Type", "LONG")
-            kotlinType.isFloat() || kotlinType.isDouble() -> ClassName("godot.core.KtVariant.Type", "DOUBLE")
-            kotlinType.getJetTypeFqName(false) == "kotlin.String" -> ClassName("godot.core.KtVariant.Type", "STRING")
-            kotlinType.isBooleanOrNullableBoolean() -> ClassName("godot.core.KtVariant.Type", "BOOL")
-            kotlinType.isCoreType() -> ClassName("godot.core.KtVariant.Type", kotlinType.getJetTypeFqName(false).substringAfterLast(".").toUpperCase())
-            kotlinType.isAnyOrNullableAny() -> ClassName("godot.core.KtVariant.Type", "OBJECT")
-            else -> throw IllegalStateException("ReturnType $kotlinType cannot be handled by godot")
-        }
-    }
-
-    private fun kotlinTypeToKtVariantConversionFunctionName(kotlinType: KotlinType): String {
-        return when {
-            kotlinType.isInt() -> "asInt"
-            kotlinType.isLong() -> "asLong"
-            kotlinType.isFloat() -> "asFloat"
-            kotlinType.isDouble() -> "asDouble"
-            kotlinType.getJetTypeFqName(false) == "kotlin.String" -> "asString"
-            kotlinType.isBooleanOrNullableBoolean() -> "asBoolean"
-            kotlinType.isCoreType() -> "as${kotlinType.getJetTypeFqName(false).substringAfterLast(".")}"
-            kotlinType.isAnyOrNullableAny() -> "asObject"
-            else -> throw IllegalStateException("ReturnType $kotlinType cannot be handled by godot")
-        }
     }
 }

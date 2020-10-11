@@ -4,6 +4,7 @@ import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FunSpec
 import godot.entrygenerator.EntryGenerationType
 import godot.entrygenerator.generator.function.FunctionRegistrationGeneratorProvider
+import godot.entrygenerator.generator.property.PropertyRegistrationGeneratorProvider
 import godot.entrygenerator.model.ClassWithMembers
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
@@ -23,7 +24,7 @@ class JvmClassRegistrationGenerator : ClassRegistrationGenerator() {
         classWithMembers.classDescriptor.constructors.forEach { classConstructorDescriptor ->
             val ctorParamsCount = classConstructorDescriptor.valueParameters.size
 
-            require(ctorParamsCount <= 5) { "A constructor cannot have more than 5 params in Godot! Reduce the params size for constructor:\n${classConstructorDescriptor.findPsi()?.text}" }
+            require(ctorParamsCount <= 5) { "A constructor cannot have more than 5 params in Godot! Reduce the param count for constructor:\n${classConstructorDescriptor.findPsi()?.text}" }
 
             if (ctorParamsCount == 0) {
                 classRegistryControlFlow.addStatement("constructor(%T(::%T))", ClassName("godot.core", "KtConstructor$ctorParamsCount"), className)
@@ -54,6 +55,8 @@ class JvmClassRegistrationGenerator : ClassRegistrationGenerator() {
     }
 
     override fun registerProperties(properties: List<PropertyDescriptor>, registerClassControlFlow: FunSpec.Builder, className: ClassName, bindingContext: BindingContext) {
-        //TODO("Not yet implemented")
+        PropertyRegistrationGeneratorProvider
+            .provide(EntryGenerationType.JVM)
+            .registerProperties(properties, registerClassControlFlow, className, bindingContext)
     }
 }
