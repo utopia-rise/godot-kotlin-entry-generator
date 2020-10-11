@@ -10,12 +10,6 @@ import java.io.File
 abstract class EntryFileBuilder(val bindingContext: BindingContext) {
     protected val entryFileSpec = FileSpec
         .builder("godot", "Entry")
-        .addAnnotation(
-            AnnotationSpec
-                .builder(ClassName("kotlin", "Suppress"))
-                .addMember("%S", "EXPERIMENTAL_API_USAGE")
-                .build()
-        )
         .addComment("THIS FILE IS GENERATED! DO NOT EDIT IT MANUALLY! ALL CHANGES TO IT WILL BE OVERWRITTEN ON EACH BUILD")
 
     abstract fun registerClassesWithMembers(classesWithMembers: Set<ClassWithMembers>): EntryFileBuilder

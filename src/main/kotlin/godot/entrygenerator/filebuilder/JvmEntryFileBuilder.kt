@@ -25,7 +25,7 @@ class JvmEntryFileBuilder(bindingContext: BindingContext): EntryFileBuilder(bind
             .beginControlFlow("with(registry)·{") //START: with registry
 
         ClassRegistrationGeneratorProvider
-            .provideClassRegistrationProvider(EntryGenerationType.KOTLIN_NATIVE)
+            .provideClassRegistrationProvider(EntryGenerationType.JVM)
             .registerClasses(classesWithMembers, classRegistryControlFlow, bindingContext)
 
         classRegistryControlFlow.endControlFlow() //END: with registry

@@ -37,9 +37,9 @@ class KotlinNativeFunctionRegistrationGenerator : FunctionRegistrationGenerator(
         variantToTypeConverterList: String
     ): String {
         return if (functionDescriptor.valueParameters.isEmpty()) {
-            "function(%S,·%T,·%L,·$typeToVariantConverter)"
+            "function(%S,·%T,·%L,·$typeToVariantConverter)\n"
         } else {
-            "function(%S,·%T,·%L,·$typeToVariantConverter,·$variantToTypeConverterList)"
+            "function(%S,·%T,·%L,·$typeToVariantConverter,·$variantToTypeConverterList)\n"
         }
     }
 

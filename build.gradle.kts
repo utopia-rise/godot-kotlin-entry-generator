@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
     kotlin("jvm")
     `maven-publish`
@@ -29,6 +31,10 @@ tasks {
 
     build {
         finalizedBy(publishToMavenLocal)
+    }
+
+    withType<KotlinCompile>().all {
+        kotlinOptions.freeCompilerArgs += "-Xopt-in=kotlin.ExperimentalStdlibApi"
     }
 }
 

@@ -22,7 +22,7 @@ abstract class FunctionRegistrationGenerator {
     ) {
         functions.forEach { functionDescriptor ->
             registerClassControlFlow
-                .addStatement(
+                .addCode(
                     getStringTemplate(functionDescriptor),
                     *getTemplateArgs(functionDescriptor, className).toTypedArray()
                 )

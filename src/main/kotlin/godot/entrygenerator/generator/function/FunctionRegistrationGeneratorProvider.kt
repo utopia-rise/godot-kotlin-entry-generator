@@ -7,7 +7,7 @@ object FunctionRegistrationGeneratorProvider {
     fun provide(generationType: EntryGenerationType): FunctionRegistrationGenerator {
         return when(generationType) {
             EntryGenerationType.KOTLIN_NATIVE -> KotlinNativeFunctionRegistrationGenerator()
-            EntryGenerationType.JVM -> TODO()
+            EntryGenerationType.JVM -> JvmFunctionRegistrationGenerator()
         }
     }
 }

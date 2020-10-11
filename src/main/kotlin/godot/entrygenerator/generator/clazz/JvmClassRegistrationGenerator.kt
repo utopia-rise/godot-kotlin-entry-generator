@@ -2,6 +2,8 @@ package godot.entrygenerator.generator.clazz
 
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FunSpec
+import godot.entrygenerator.EntryGenerationType
+import godot.entrygenerator.generator.function.FunctionRegistrationGeneratorProvider
 import godot.entrygenerator.model.ClassWithMembers
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
@@ -42,14 +44,16 @@ class JvmClassRegistrationGenerator : ClassRegistrationGenerator() {
     }
 
     override fun registerFunctions(functions: List<FunctionDescriptor>, registerClassControlFlow: FunSpec.Builder, className: ClassName) {
-        TODO("Not yet implemented")
+        FunctionRegistrationGeneratorProvider
+            .provide(EntryGenerationType.JVM)
+            .registerFunctions(functions, registerClassControlFlow, className)
     }
 
     override fun registerSignals(signals: List<PropertyDescriptor>, registerClassControlFlow: FunSpec.Builder) {
-        TODO("Not yet implemented")
+        //TODO("Not yet implemented")
     }
 
     override fun registerProperties(properties: List<PropertyDescriptor>, registerClassControlFlow: FunSpec.Builder, className: ClassName, bindingContext: BindingContext) {
-        TODO("Not yet implemented")
+        //TODO("Not yet implemented")
     }
 }
