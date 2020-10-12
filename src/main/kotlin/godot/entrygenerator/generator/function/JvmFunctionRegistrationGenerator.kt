@@ -38,7 +38,7 @@ class JvmFunctionRegistrationGenerator : FunctionRegistrationGenerator() {
         functionDescriptor: FunctionDescriptor
     ): String {
         return buildString {
-            append("function(%L, %L") //functionReference, containingClassReference
+            append("function(%L, %L") //functionReference, returnTypeConverterReference
 
             if (functionDescriptor.valueParameters.isNotEmpty()) {
                 functionDescriptor.valueParameters.forEach { _ ->
