@@ -96,7 +96,7 @@ class JvmFunctionRegistrationGenerator : FunctionRegistrationGenerator() {
         }
 
         args.forEachIndexed { index, argument ->
-            requireNotNull(argument) { "An argument type of function ${functionDescriptor.fqNameSafe} is null. This means there was an error in the type resolving in the compilation process" }
+            requireNotNull(argument) { "An argument type of function ${functionDescriptor.fqNameSafe} is null. This means there was an error in the type resolving in the compilation process. Try a clean build and submit a bug if this does not help" }
             if (index != 0) {
                 argsCodeBlock.add(",")
             }
