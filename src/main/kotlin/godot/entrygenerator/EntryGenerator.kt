@@ -41,5 +41,5 @@ object EntryGenerator {
         GdnsGenerator.generateGdnsFiles(outputPath, gdnLibFilePath, cleanGeneratedGdnsFiles, classes)
     }
 
-    fun generateServiceFile(projectRoot: String) = ServiceGenerator.generateServiceFile(projectRoot)
+    fun generateServiceFile(serviceFileDir: String) = ServiceGenerator.generateServiceFile(serviceFileDir)
 }

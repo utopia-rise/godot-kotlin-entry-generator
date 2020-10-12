@@ -10,7 +10,6 @@ group = "com.utopia-rise"
 version = "0.1.0-${DependenciesVersions.godotVersion}"
 
 repositories {
-    mavenLocal()
     mavenCentral()
     jcenter()
 }
