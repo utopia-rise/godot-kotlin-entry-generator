@@ -17,7 +17,11 @@ import org.jetbrains.kotlin.resolve.BindingContext
 
 class JvmPropertyRegistrationGenerator : PropertyRegistrationGenerator() {
     override fun registerEnumFlag(className: ClassName, propertyDescriptor: PropertyDescriptor, bindingContext: BindingContext, registerClassControlFlow: FunSpec.Builder) {
-        TODO("Not yet implemented")
+        registerClassControlFlow
+            .addStatement(
+                "enumFlagProperty(%L)",
+                getPropertyReference(propertyDescriptor)
+            )
     }
 
     override fun registerEnumList(className: ClassName, propertyDescriptor: PropertyDescriptor, bindingContext: BindingContext, registerClassControlFlow: FunSpec.Builder) {
@@ -25,7 +29,11 @@ class JvmPropertyRegistrationGenerator : PropertyRegistrationGenerator() {
     }
 
     override fun registerEnum(className: ClassName, propertyDescriptor: PropertyDescriptor, bindingContext: BindingContext, registerClassControlFlow: FunSpec.Builder) {
-        TODO("Not yet implemented")
+        registerClassControlFlow
+            .addStatement(
+                "enumProperty(%L)",
+                getPropertyReference(propertyDescriptor)
+            )
     }
 
     override fun registerProperty(className: ClassName, propertyDescriptor: PropertyDescriptor, bindingContext: BindingContext, registerClassControlFlow: FunSpec.Builder) {
