@@ -30,17 +30,16 @@ class JvmPropertyRegistrationGenerator : PropertyRegistrationGenerator() {
 
     override fun registerProperty(className: ClassName, propertyDescriptor: PropertyDescriptor, bindingContext: BindingContext, registerClassControlFlow: FunSpec.Builder) {
         registerClassControlFlow
-            .beginControlFlow(
-                "property(%L, %L, %L)",
+            .addStatement(
+                "property(%L,·%L,·%L,·%T,·%S,·%T,·%S)",
                 getPropertyReference(propertyDescriptor),
                 getGetterValueConverterReference(),
-                getSetterValueConverterReference(propertyDescriptor)
+                getSetterValueConverterReference(propertyDescriptor),
+                propertyDescriptor.type.toKtVariantType(),
+                propertyDescriptor.type.getJetTypeFqName(false).substringAfterLast("."),
+                PropertyTypeHintProvider.provide(propertyDescriptor, EntryGenerationType.JVM),
+                PropertyHintStringGeneratorProvider.provide(propertyDescriptor, bindingContext).getHintString()
             )
-            .addStatement("type = %T", propertyDescriptor.type.toKtVariantType())
-            .addStatement("className = %S", propertyDescriptor.type.getJetTypeFqName(false).substringAfterLast("."))
-            .addStatement("hint = %T", PropertyTypeHintProvider.provide(propertyDescriptor, EntryGenerationType.JVM))
-            .addStatement("hintString = %S", PropertyHintStringGeneratorProvider.provide(propertyDescriptor, bindingContext).getHintString())
-            .endControlFlow()
     }
 
     private fun getPropertyReference(propertyDescriptor: PropertyDescriptor): CodeBlock {

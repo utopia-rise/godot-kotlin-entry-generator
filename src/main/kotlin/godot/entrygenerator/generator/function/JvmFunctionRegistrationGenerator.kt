@@ -17,6 +17,12 @@ class JvmFunctionRegistrationGenerator : FunctionRegistrationGenerator() {
     }
 
     override fun getTemplateArgs(functionDescriptor: FunctionDescriptor, className: ClassName): List<Any> {
+        val ktFunctionArgumentClassName = ClassName("godot.runtime", "KtFunctionArgument")
+        val returnType = functionDescriptor.returnType
+
+        requireNotNull(returnType) {
+            "ReturnType cannot be null. Usually this means there was an error in the kotlin compilation. Try a clean build and submit a bug if this does not help"
+        }
         return buildList {
             add(getFunctionReference(functionDescriptor))
             add(getReturnValueConverterReference(functionDescriptor))
@@ -27,10 +33,16 @@ class JvmFunctionRegistrationGenerator : FunctionRegistrationGenerator() {
                     val conversionFunction = ktVariantClassName.member(valueParameter.type.toKtVariantConversionFunctionName()).reference()
                     add(conversionFunction)
                 }
-                add(getArgsDsl(functionDescriptor))
+                functionDescriptor.valueParameters.forEach { valueParameter ->
+                    add(ktFunctionArgumentClassName)
+                    add(valueParameter.type.toKtVariantType())
+                    add(valueParameter.type.getJetTypeFqName(false).substringAfterLast("."))
+                }
             }
 
-            add(getReturnsDsl(functionDescriptor))
+            add(ktFunctionArgumentClassName)
+            add(returnType.toKtVariantType())
+            add(returnType.getJetTypeFqName(false).substringAfterLast("."))
         }
     }
 
@@ -38,16 +50,18 @@ class JvmFunctionRegistrationGenerator : FunctionRegistrationGenerator() {
         functionDescriptor: FunctionDescriptor
     ): String {
         return buildString {
-            append("function(%L, %L") //functionReference, returnTypeConverterReference
+            append("function(%L,·%L") //functionReference, returnTypeConverterReference
 
             if (functionDescriptor.valueParameters.isNotEmpty()) {
                 functionDescriptor.valueParameters.forEach { _ ->
-                    append(", %L") //type mapping function
+                    append(",·%L") //type mapping function
                 }
-                append(", %L") //argsDsl
+                functionDescriptor.valueParameters.forEach { _ ->
+                    append(",·%T(%T,·%S)") //argument KtFunctionArgument
+                }
             }
 
-            append(", %L)\n") //returnsDsl
+            append(",·%T(%T,·%S))") //return KtFunctionArgument
         }
     }
 
@@ -68,55 +82,55 @@ class JvmFunctionRegistrationGenerator : FunctionRegistrationGenerator() {
         return ClassName(classPackage, className)
     }
 
-    private fun getReturnsDsl(functionDescriptor: FunctionDescriptor): CodeBlock {
-        val returnsType = getReturnType(functionDescriptor)
-        return CodeBlock
-            .builder()
-            .beginControlFlow("returns =")
-            .addStatement("type = %T", returnsType)
-            .addStatement("className = %S", requireNotNull(functionDescriptor.returnType?.getJetTypeFqName(false)?.substringAfterLast(".")) { "ReturnType cannot be null. Usually this means there was an error in the kotlin compilation. Try a clean build and submit a bug if this does not help" })
-            .endControlFlow()
-            .build()
-    }
+//    private fun getReturnsDsl(functionDescriptor: FunctionDescriptor): CodeBlock {
+//        val returnsType = getReturnType(functionDescriptor)
+//        return CodeBlock
+//            .builder()
+//            .beginControlFlow("returns =")
+//            .addStatement("type = %T", returnsType)
+//            .addStatement("className = %S", requireNotNull(functionDescriptor.returnType?.getJetTypeFqName(false)?.substringAfterLast(".")) { "ReturnType cannot be null. Usually this means there was an error in the kotlin compilation. Try a clean build and submit a bug if this does not help" })
+//            .endControlFlow()
+//            .build()
+//    }
 
-    private fun getReturnType(functionDescriptor: FunctionDescriptor): ClassName {
-        return functionDescriptor
-            .returnType
-            .toKtVariantType()
-    }
+//    private fun getReturnType(functionDescriptor: FunctionDescriptor): ClassName {
+//        return functionDescriptor
+//            .returnType
+//            .toKtVariantType()
+//    }
 
-    private fun getArgsDsl(functionDescriptor: FunctionDescriptor): CodeBlock {
-        val args = functionDescriptor.valueParameters
-
-        val argsCodeBlock = CodeBlock
-            .builder()
-
-        if (args.size != 1) {
-            argsCodeBlock.addStatement("args = arrayOf(")
-        }
-
-        args.forEachIndexed { index, argument ->
-            requireNotNull(argument) { "An argument type of function ${functionDescriptor.fqNameSafe} is null. This means there was an error in the type resolving in the compilation process. Try a clean build and submit a bug if this does not help" }
-            if (index != 0) {
-                argsCodeBlock.add(",")
-            }
-            val controlFlowString = if (args.size == 1) {
-                "arg ="
-            } else {
-                ""
-            }
-            argsCodeBlock
-                .beginControlFlow(controlFlowString)
-                .addStatement("name = %S", argument.name)
-                .addStatement("type = %T", argument.type.toKtVariantType())
-                .addStatement("className = %S", argument.type.getJetTypeFqName(false).substringAfterLast("."))
-                .endControlFlow()
-        }
-
-        if (args.size != 1) {
-            argsCodeBlock.addStatement(")")
-        }
-
-        return argsCodeBlock.build()
-    }
+//    private fun getArgsDsl(functionDescriptor: FunctionDescriptor): CodeBlock {
+//        val args = functionDescriptor.valueParameters
+//
+//        val argsCodeBlock = CodeBlock
+//            .builder()
+//
+//        if (args.size != 1) {
+//            argsCodeBlock.addStatement("args = arrayOf(")
+//        }
+//
+//        args.forEachIndexed { index, argument ->
+//            requireNotNull(argument) { "An argument type of function ${functionDescriptor.fqNameSafe} is null. This means there was an error in the type resolving in the compilation process. Try a clean build and submit a bug if this does not help" }
+//            if (index != 0) {
+//                argsCodeBlock.add(",")
+//            }
+//            val controlFlowString = if (args.size == 1) {
+//                "arg ="
+//            } else {
+//                ""
+//            }
+//            argsCodeBlock
+//                .beginControlFlow(controlFlowString)
+//                .addStatement("name = %S", argument.name)
+//                .addStatement("type = %T", argument.type.toKtVariantType())
+//                .addStatement("className = %S", argument.type.getJetTypeFqName(false).substringAfterLast("."))
+//                .endControlFlow()
+//        }
+//
+//        if (args.size != 1) {
+//            argsCodeBlock.addStatement(")")
+//        }
+//
+//        return argsCodeBlock.build()
+//    }
 }
