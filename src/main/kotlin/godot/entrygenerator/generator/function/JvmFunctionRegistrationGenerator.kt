@@ -74,7 +74,7 @@ class JvmFunctionRegistrationGenerator : FunctionRegistrationGenerator() {
             .builder()
             .beginControlFlow("returns =")
             .addStatement("type = %T", returnsType)
-            .addStatement("className = %S", requireNotNull(functionDescriptor.returnType?.getJetTypeFqName(false)?.substringAfterLast(".")) { TODO() })
+            .addStatement("className = %S", requireNotNull(functionDescriptor.returnType?.getJetTypeFqName(false)?.substringAfterLast(".")) { "ReturnType cannot be null. Usually this means there was an error in the kotlin compilation. Try a clean build and submit a bug if this does not help" })
             .endControlFlow()
             .build()
     }
