@@ -28,6 +28,8 @@ class JvmEntryFileBuilder(bindingContext: BindingContext): EntryFileBuilder(bind
             .provideClassRegistrationProvider(EntryGenerationType.JVM)
             .registerClasses(classesWithMembers, classRegistryControlFlow, bindingContext)
 
+        classRegistryControlFlow.addStatement("registerEngineTypes()")
+
         classRegistryControlFlow.endControlFlow() //END: with registry
 
         entryClassSpec.addFunction(initFunctionSpec.build())
