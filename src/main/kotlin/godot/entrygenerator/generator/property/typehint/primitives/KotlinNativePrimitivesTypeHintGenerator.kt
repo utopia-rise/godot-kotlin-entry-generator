@@ -1,12 +1,13 @@
-package godot.entrygenerator.generator.property.typehint
+package godot.entrygenerator.generator.property.typehint.primitives
 
 import com.squareup.kotlinpoet.ClassName
 import godot.entrygenerator.exceptions.WrongAnnotationUsageException
 import godot.entrygenerator.extension.getAnnotationValue
+import godot.entrygenerator.generator.property.typehint.PropertyTypeHintGenerator
 import godot.entrygenerator.model.FILE_AND_DIR_ANNOTATION_GLOBAL_ARGUMENT
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 
-class PrimitivesTypeHintGenerator(
+class KotlinNativePrimitivesTypeHintGenerator(
     private val propertyDescriptor: PropertyDescriptor
 ) : PropertyTypeHintGenerator(propertyDescriptor) {
     override fun getPropertyTypeHint(): ClassName {

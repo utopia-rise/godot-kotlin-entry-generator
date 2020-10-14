@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
     kotlin("jvm")
     `maven-publish`
@@ -8,7 +10,6 @@ group = "com.utopia-rise"
 version = "0.1.0-${DependenciesVersions.godotVersion}"
 
 repositories {
-    mavenLocal()
     mavenCentral()
     jcenter()
 }
@@ -29,6 +30,10 @@ tasks {
 
     build {
         finalizedBy(publishToMavenLocal)
+    }
+
+    withType<KotlinCompile>().all {
+        kotlinOptions.freeCompilerArgs += "-Xopt-in=kotlin.ExperimentalStdlibApi"
     }
 }
 

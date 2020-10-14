@@ -12,6 +12,12 @@ class KotlinNativeEntryFileBuilder(bindingContext: BindingContext): EntryFileBui
 
     init {
         entryFileSpec
+            .addAnnotation(
+                AnnotationSpec
+                    .builder(ClassName("kotlin", "Suppress"))
+                    .addMember("%S", "EXPERIMENTAL_API_USAGE")
+                    .build()
+            )
             .addFunction(generateGDNativeInitFunction())
             .addFunction(generateGDNativeTerminateFunction())
     }

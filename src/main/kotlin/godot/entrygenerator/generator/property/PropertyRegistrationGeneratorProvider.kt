@@ -7,7 +7,7 @@ object PropertyRegistrationGeneratorProvider {
     fun provide(entryGenerationType: EntryGenerationType): PropertyRegistrationGenerator {
         return when (entryGenerationType) {
             EntryGenerationType.KOTLIN_NATIVE -> KotlinNativePropertyRegistrationGenerator()
-            EntryGenerationType.JVM -> TODO()
+            EntryGenerationType.JVM -> JvmPropertyRegistrationGenerator()
         }
     }
 }

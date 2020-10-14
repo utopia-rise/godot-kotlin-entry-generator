@@ -1,9 +1,14 @@
 package godot.entrygenerator.generator.property.typehint
 
 import com.squareup.kotlinpoet.ClassName
+import godot.entrygenerator.EntryGenerationType
 import godot.entrygenerator.extension.isCompatibleList
 import godot.entrygenerator.extension.isCoreType
 import godot.entrygenerator.extension.isResource
+import godot.entrygenerator.generator.property.typehint.array.ArrayTypeHintGeneratorProvider
+import godot.entrygenerator.generator.property.typehint.array.KotlinNativeArrayTypeHintGenerator
+import godot.entrygenerator.generator.property.typehint.coretypes.CoreTypeTypeHintGeneratorProvider
+import godot.entrygenerator.generator.property.typehint.primitives.PrimitivesTypeHintGeneratorProvider
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.name.FqName
@@ -12,46 +17,73 @@ import org.jetbrains.kotlin.types.typeUtil.isEnum
 object PropertyTypeHintProvider {
 
     fun provide(
-        propertyDescriptor: PropertyDescriptor
+        propertyDescriptor: PropertyDescriptor,
+        entryGenerationType: EntryGenerationType
     ): ClassName {
         return when {
             KotlinBuiltIns.isInt(propertyDescriptor.type) ->
                 if (propertyDescriptor.annotations.hasAnnotation(FqName("godot.annotation.IntFlag"))) {
-                    ClassName("godot.gdnative.godot_property_hint", "GODOT_PROPERTY_HINT_FLAGS")
+                    when (entryGenerationType) {
+                        EntryGenerationType.KOTLIN_NATIVE -> ClassName("godot.gdnative.godot_property_hint", "GODOT_PROPERTY_HINT_FLAGS")
+                        EntryGenerationType.JVM -> ClassName("godot.core.PropertyHint", "FLAGS")
+                    }
                 } else {
-                    PrimitivesTypeHintGenerator(propertyDescriptor).getPropertyTypeHint()
+                    PrimitivesTypeHintGeneratorProvider.provide(entryGenerationType, propertyDescriptor).getPropertyTypeHint()
                 }
 
             KotlinBuiltIns.isString(propertyDescriptor.type) ->
                 when {
                     propertyDescriptor.annotations.hasAnnotation(FqName("godot.annotation.MultilineText")) -> {
-                        ClassName(
-                            "godot.gdnative.godot_property_hint",
-                            "GODOT_PROPERTY_HINT_MULTILINE_TEXT"
-                        )
+                        when (entryGenerationType) {
+                            EntryGenerationType.KOTLIN_NATIVE -> ClassName(
+                                "godot.gdnative.godot_property_hint",
+                                "GODOT_PROPERTY_HINT_MULTILINE_TEXT"
+                            )
+                            EntryGenerationType.JVM -> ClassName(
+                                "godot.core.PropertyHint",
+                                "MULTILINE_TEXT"
+                            )
+                        }
                     }
                     propertyDescriptor.annotations.hasAnnotation(FqName("godot.annotation.PlaceHolderText")) -> {
-                        ClassName(
-                            "godot.gdnative.godot_property_hint",
-                            "GODOT_PROPERTY_HINT_PLACEHOLDER_TEXT"
-                        )
+                        when (entryGenerationType) {
+                            EntryGenerationType.KOTLIN_NATIVE -> ClassName(
+                                "godot.gdnative.godot_property_hint",
+                                "GODOT_PROPERTY_HINT_PLACEHOLDER_TEXT"
+                            )
+                            EntryGenerationType.JVM -> ClassName(
+                                "godot.core.PropertyHint",
+                                "PLACEHOLDER_TEXT"
+                            )
+                        }
                     }
                     else -> {
-                        PrimitivesTypeHintGenerator(propertyDescriptor).getPropertyTypeHint()
+                        PrimitivesTypeHintGeneratorProvider.provide(entryGenerationType, propertyDescriptor).getPropertyTypeHint()
                     }
                 }
 
             KotlinBuiltIns.isLong(propertyDescriptor.type)
-                    || KotlinBuiltIns.isFloat(propertyDescriptor.type)
-                    || KotlinBuiltIns.isDouble(propertyDescriptor.type)
-                    || KotlinBuiltIns.isBoolean(propertyDescriptor.type) -> PrimitivesTypeHintGenerator(propertyDescriptor).getPropertyTypeHint()
+                || KotlinBuiltIns.isFloat(propertyDescriptor.type)
+                || KotlinBuiltIns.isDouble(propertyDescriptor.type)
+                || KotlinBuiltIns.isBoolean(propertyDescriptor.type) -> PrimitivesTypeHintGeneratorProvider.provide(entryGenerationType, propertyDescriptor).getPropertyTypeHint()
+
             propertyDescriptor.type.isEnum() -> throw UnsupportedOperationException("Hint type for enum is always the same, so it is handled by binding at runtime")
-            propertyDescriptor.type.isCoreType() && !propertyDescriptor.type.isCompatibleList() -> CoreTypeTypeHintGenerator(propertyDescriptor).getPropertyTypeHint()
-            propertyDescriptor.type.isResource() -> ClassName(
-                "godot.gdnative.godot_property_hint",
-                "GODOT_PROPERTY_HINT_RESOURCE_TYPE"
-            )
-            propertyDescriptor.type.isCompatibleList() -> ArrayTypeHintGenerator(propertyDescriptor).getPropertyTypeHint()
+
+            propertyDescriptor.type.isCoreType() && !propertyDescriptor.type.isCompatibleList() -> CoreTypeTypeHintGeneratorProvider
+                .provide(entryGenerationType, propertyDescriptor)
+                .getPropertyTypeHint()
+
+            propertyDescriptor.type.isResource() -> when(entryGenerationType) {
+                EntryGenerationType.KOTLIN_NATIVE -> ClassName(
+                    "godot.gdnative.godot_property_hint",
+                    "GODOT_PROPERTY_HINT_RESOURCE_TYPE"
+                )
+                EntryGenerationType.JVM -> ClassName(
+                    "godot.core.PropertyHint",
+                    "RESOURCE_TYPE"
+                )
+            }
+            propertyDescriptor.type.isCompatibleList() -> ArrayTypeHintGeneratorProvider.provide(entryGenerationType, propertyDescriptor).getPropertyTypeHint()
             KotlinBuiltIns.isSetOrNullableSet((propertyDescriptor.type)) -> throw UnsupportedOperationException("Hint type for enum is always the same, so it is handled by binding at runtime")
             else -> throw IllegalStateException("There is no type hint generator for the property descriptor $propertyDescriptor")
         }

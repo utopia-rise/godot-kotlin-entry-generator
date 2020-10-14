@@ -1,10 +1,11 @@
-package godot.entrygenerator.generator.property.typehint
+package godot.entrygenerator.generator.property.typehint.coretypes
 
 import com.squareup.kotlinpoet.ClassName
 import godot.entrygenerator.exceptions.WrongAnnotationUsageException
+import godot.entrygenerator.generator.property.typehint.PropertyTypeHintGenerator
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 
-class CoreTypeTypeHintGenerator(
+class KotlinNativeCoreTypeTypeHintGenerator(
     private val propertyDescriptor: PropertyDescriptor
 ) : PropertyTypeHintGenerator(propertyDescriptor) {
     override fun getPropertyTypeHint(): ClassName {

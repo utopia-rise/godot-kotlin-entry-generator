@@ -1,8 +1,9 @@
 package godot.entrygenerator.extension
 
+import com.squareup.kotlinpoet.ClassName
 import org.jetbrains.kotlin.js.descriptorUtils.getJetTypeFqName
 import org.jetbrains.kotlin.types.KotlinType
-import org.jetbrains.kotlin.types.typeUtil.supertypes
+import org.jetbrains.kotlin.types.typeUtil.*
 
 
 fun KotlinType.isCoreType(): Boolean {
@@ -86,3 +87,33 @@ private val coreTypes = listOf(
     "godot.core.Vector2Array",
     "godot.core.Vector3Array"
 )
+
+
+
+fun KotlinType?.toKtVariantType(): ClassName {
+    return when {
+        this == null -> throw IllegalStateException("Type is null")
+        this.isUnit() -> ClassName("godot.core.KtVariant.Type", "NIL")
+        this.isInt() || this.isLong() -> ClassName("godot.core.KtVariant.Type", "LONG")
+        this.isFloat() || this.isDouble() -> ClassName("godot.core.KtVariant.Type", "DOUBLE")
+        this.getJetTypeFqName(false) == "kotlin.String" -> ClassName("godot.core.KtVariant.Type", "STRING")
+        this.isBooleanOrNullableBoolean() -> ClassName("godot.core.KtVariant.Type", "BOOL")
+        this.isCoreType() -> ClassName("godot.core.KtVariant.Type", this.getJetTypeFqName(false).substringAfterLast(".").toUpperCase())
+        this.isAnyOrNullableAny() -> ClassName("godot.core.KtVariant.Type", "OBJECT")
+        else -> throw IllegalStateException("ReturnType $this cannot be handled by godot")
+    }
+}
+
+fun KotlinType.toKtVariantConversionFunctionName(): String {
+    return when {
+        this.isInt() -> "asInt"
+        this.isLong() -> "asLong"
+        this.isFloat() -> "asFloat"
+        this.isDouble() -> "asDouble"
+        this.getJetTypeFqName(false) == "kotlin.String" -> "asString"
+        this.isBooleanOrNullableBoolean() -> "asBoolean"
+        this.isCoreType() -> "as${this.getJetTypeFqName(false).substringAfterLast(".")}"
+        this.isAnyOrNullableAny() -> "asObject"
+        else -> throw IllegalStateException("ReturnType $this cannot be handled by godot")
+    }
+}
