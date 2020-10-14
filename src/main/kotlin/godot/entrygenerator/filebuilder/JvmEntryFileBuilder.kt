@@ -1,9 +1,6 @@
 package godot.entrygenerator.filebuilder
 
-import com.squareup.kotlinpoet.ClassName
-import com.squareup.kotlinpoet.FunSpec
-import com.squareup.kotlinpoet.KModifier
-import com.squareup.kotlinpoet.TypeSpec
+import com.squareup.kotlinpoet.*
 import godot.entrygenerator.EntryGenerationType
 import godot.entrygenerator.generator.clazz.ClassRegistrationGeneratorProvider
 import godot.entrygenerator.model.ClassWithMembers
@@ -28,7 +25,7 @@ class JvmEntryFileBuilder(bindingContext: BindingContext): EntryFileBuilder(bind
             .provideClassRegistrationProvider(EntryGenerationType.JVM)
             .registerClasses(classesWithMembers, classRegistryControlFlow, bindingContext)
 
-        classRegistryControlFlow.addStatement("registerEngineTypes()")
+        classRegistryControlFlow.addStatement("%M()", MemberName("godot", "registerEngineTypes"))
 
         classRegistryControlFlow.endControlFlow() //END: with registry
 
