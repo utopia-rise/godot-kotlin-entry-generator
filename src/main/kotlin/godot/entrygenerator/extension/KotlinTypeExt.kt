@@ -10,6 +10,10 @@ fun KotlinType.isCoreType(): Boolean {
     return coreTypes.contains(getJetTypeFqName(false))
 }
 
+fun KotlinType.isEngineTypes(): Boolean {
+    return engineTypes.contains(getJetTypeFqName(false))
+}
+
 fun KotlinType.isResource(): Boolean {
     return this.getJetTypeFqName(false) == "godot.Resource"
         || this
@@ -58,7 +62,6 @@ private val coreTypes = listOf(
     "godot.core.NodePath",
     "godot.core.RID",
     "godot.Object",
-    "godot.Spatial",
     "godot.core.Dictionary",
     "godot.core.PoolByteArray",
     "godot.core.PoolIntArray",
@@ -89,6 +92,10 @@ private val coreTypes = listOf(
     "godot.core.Vector3Array"
 )
 
+private val engineTypes = listOf(
+    "godot.Spatial"
+)
+
 
 
 fun KotlinType?.toKtVariantType(): ClassName {
@@ -100,7 +107,7 @@ fun KotlinType?.toKtVariantType(): ClassName {
         this.getJetTypeFqName(false) == "kotlin.String" -> ClassName("godot.core.KtVariant.Type", "STRING")
         this.isBooleanOrNullableBoolean() -> ClassName("godot.core.KtVariant.Type", "BOOL")
         this.isCoreType() -> ClassName("godot.core.KtVariant.Type", this.getJetTypeFqName(false).substringAfterLast(".").toUpperCase())
-        this.isAnyOrNullableAny() -> ClassName("godot.core.KtVariant.Type", "OBJECT")
+        this.isEngineTypes() || this.isAnyOrNullableAny() -> ClassName("godot.core.KtVariant.Type", "OBJECT")
         else -> throw IllegalStateException("ReturnType $this cannot be handled by godot")
     }
 }
@@ -114,7 +121,7 @@ fun KotlinType.toKtVariantConversionFunctionName(): String {
         this.getJetTypeFqName(false) == "kotlin.String" -> "asString"
         this.isBooleanOrNullableBoolean() -> "asBoolean"
         this.isCoreType() -> "as${this.getJetTypeFqName(false).substringAfterLast(".")}"
-        this.isAnyOrNullableAny() -> "asObject"
+        this.isEngineTypes() || this.isAnyOrNullableAny() -> "asObject"
         else -> throw IllegalStateException("ReturnType $this cannot be handled by godot")
     }
 }
