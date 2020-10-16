@@ -58,6 +58,7 @@ private val coreTypes = listOf(
     "godot.core.NodePath",
     "godot.core.RID",
     "godot.Object",
+    "godot.Spatial",
     "godot.core.Dictionary",
     "godot.core.PoolByteArray",
     "godot.core.PoolIntArray",
