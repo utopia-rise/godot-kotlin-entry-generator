@@ -37,6 +37,7 @@ class JvmFunctionRegistrationGenerator : FunctionRegistrationGenerator() {
                     add(ktFunctionArgumentClassName)
                     add(valueParameter.type.toKtVariantType())
                     add(valueParameter.type.getJetTypeFqName(false).substringAfterLast("."))
+                    add(valueParameter.name.asString())
                 }
             }
 
@@ -57,7 +58,7 @@ class JvmFunctionRegistrationGenerator : FunctionRegistrationGenerator() {
                     append(",·%L") //type mapping function
                 }
                 functionDescriptor.valueParameters.forEach { _ ->
-                    append(",·%T(%T,·%S)") //argument KtFunctionArgument
+                    append(",·%T(%T,·%S,·%S)") //argument KtFunctionArgument
                 }
             }
 
