@@ -7,6 +7,7 @@ import com.squareup.kotlinpoet.MemberName.Companion.member
 import godot.entrygenerator.EntryGenerationType
 import godot.entrygenerator.extension.toKtVariantConversionFunctionName
 import godot.entrygenerator.extension.toKtVariantType
+import godot.entrygenerator.generator.property.defaultvalue.DefaultValueExtractorProvider
 import godot.entrygenerator.generator.property.hintstring.PropertyHintStringGeneratorProvider
 import godot.entrygenerator.generator.property.typehint.PropertyTypeHintProvider
 import org.jetbrains.kotlin.backend.common.serialization.findPackage
@@ -14,6 +15,7 @@ import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.js.descriptorUtils.getJetTypeFqName
 import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 
 class JvmPropertyRegistrationGenerator : PropertyRegistrationGenerator() {
     override fun registerEnumFlag(className: ClassName, propertyDescriptor: PropertyDescriptor, bindingContext: BindingContext, registerClassControlFlow: FunSpec.Builder) {
@@ -37,16 +39,21 @@ class JvmPropertyRegistrationGenerator : PropertyRegistrationGenerator() {
     }
 
     override fun registerProperty(className: ClassName, propertyDescriptor: PropertyDescriptor, bindingContext: BindingContext, registerClassControlFlow: FunSpec.Builder) {
+        val (defaultValueStringTemplate, defaultValueStringTemplateValues) = DefaultValueExtractorProvider
+            .provide(propertyDescriptor, bindingContext)
+            .getDefaultValue(ClassName("godot.core", "KtVariant"))
+
         registerClassControlFlow
             .addStatement(
-                "property(%L,·%L,·%L,·%T,·%S,·%T,·%S)",
+                "property(%L,·%L,·%L,·%T,·%S,·%T,·%S,·${defaultValueStringTemplate.replace(" ", "·")})",
                 getPropertyReference(propertyDescriptor),
                 getGetterValueConverterReference(),
                 getSetterValueConverterReference(propertyDescriptor),
                 propertyDescriptor.type.toKtVariantType(),
                 propertyDescriptor.type.getJetTypeFqName(false),
                 PropertyTypeHintProvider.provide(propertyDescriptor, EntryGenerationType.JVM),
-                PropertyHintStringGeneratorProvider.provide(propertyDescriptor, bindingContext).getHintString()
+                PropertyHintStringGeneratorProvider.provide(propertyDescriptor, bindingContext).getHintString(),
+                *defaultValueStringTemplateValues
             )
     }
 
