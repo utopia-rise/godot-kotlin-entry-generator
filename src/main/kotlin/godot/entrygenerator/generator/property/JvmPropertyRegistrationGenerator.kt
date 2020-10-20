@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.backend.common.serialization.findPackage
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.js.descriptorUtils.getJetTypeFqName
+import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 
@@ -46,16 +47,37 @@ class JvmPropertyRegistrationGenerator : PropertyRegistrationGenerator() {
         requireNotNull(propertyDescriptor.delegateField) { errorText }
         require(bindingContext.getType(propertyDescriptor.assignmentPsi)?.getJetTypeFqName(false) == "godot.runtime.KtReferenceDelegateProvider") { errorText }
 
+        val defaultValueExpression = propertyDescriptor
+            .assignmentPsi
+            .children
+            .last()
+            .children
+            .last()
+            .children
+            .last()
+
+        val defaultValueStringTemplateWithTemplateValues = if (defaultValueExpression is KtCallableReferenceExpression) {
+            val fqName = propertyDescriptor.type.getJetTypeFqName(false)
+            val defaultValuePackageName = fqName.substringBeforeLast(".")
+            val defaultValueClassName = fqName.substringAfterLast(".")
+            "%T()" to ClassName(defaultValuePackageName, defaultValueClassName)
+        } else {
+            "%L" to defaultValueExpression.text.replace(" ", "·")
+        }
+
+
         registerClassControlFlow
             .addStatement(
-                "property(%L,·%L,·%L,·%T,·%S,·%T,·%S,·isRef·=·true)",
+                "property(%L,·%L,·%L,·%T,·%S,·%T,·%S,·%T(${defaultValueStringTemplateWithTemplateValues.first}),·true)",
                 getPropertyReference(propertyDescriptor),
                 getGetterValueConverterReference(),
                 getSetterValueConverterReference(propertyDescriptor),
                 propertyDescriptor.type.toKtVariantType(),
                 propertyDescriptor.containingDeclaration.fqNameSafe,
                 PropertyTypeHintProvider.provide(propertyDescriptor, EntryGenerationType.JVM),
-                PropertyHintStringGeneratorProvider.provide(propertyDescriptor, bindingContext, EntryGenerationType.JVM).getHintString()
+                PropertyHintStringGeneratorProvider.provide(propertyDescriptor, bindingContext, EntryGenerationType.JVM).getHintString(),
+                ClassName("godot.core", "KtVariant"),
+                defaultValueStringTemplateWithTemplateValues.second
             )
     }
 
