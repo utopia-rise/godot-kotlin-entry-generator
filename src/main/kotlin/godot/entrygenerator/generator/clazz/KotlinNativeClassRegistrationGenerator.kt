@@ -39,6 +39,6 @@ class KotlinNativeClassRegistrationGenerator : ClassRegistrationGenerator() {
     override fun registerProperties(properties: List<PropertyDescriptor>, registerClassControlFlow: FunSpec.Builder, className: ClassName, bindingContext: BindingContext) {
         PropertyRegistrationGeneratorProvider
             .provide(EntryGenerationType.KOTLIN_NATIVE)
-            .registerProperties(properties, registerClassControlFlow, className, bindingContext)
+            .registerProperties(properties, registerClassControlFlow, className, bindingContext, EntryGenerationType.KOTLIN_NATIVE)
     }
 }

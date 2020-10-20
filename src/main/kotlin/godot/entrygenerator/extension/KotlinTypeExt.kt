@@ -1,6 +1,7 @@
 package godot.entrygenerator.extension
 
 import com.squareup.kotlinpoet.ClassName
+import godot.entrygenerator.EntryGenerationType
 import org.jetbrains.kotlin.js.descriptorUtils.getJetTypeFqName
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.*
@@ -10,12 +11,17 @@ fun KotlinType.isCoreType(): Boolean {
     return coreTypes.contains(getJetTypeFqName(false))
 }
 
-fun KotlinType.isResource(): Boolean {
-    return this.getJetTypeFqName(false) == "godot.Resource"
+private fun getReferenceFqName(entryGenerationType: EntryGenerationType) = when (entryGenerationType) {
+    EntryGenerationType.KOTLIN_NATIVE -> "godot.Resource"
+    EntryGenerationType.JVM -> "godot.core.KtReference"
+}
+
+fun KotlinType.isReference(entryGenerationType: EntryGenerationType): Boolean {
+    return this.getJetTypeFqName(false) == getReferenceFqName(entryGenerationType)
         || this
         .supertypes()
         .map { it.getJetTypeFqName(false) }
-        .any { it == "godot.Resource" }
+        .any { it == getReferenceFqName(entryGenerationType) }
 }
 
 fun KotlinType.isCompatibleList(): Boolean {

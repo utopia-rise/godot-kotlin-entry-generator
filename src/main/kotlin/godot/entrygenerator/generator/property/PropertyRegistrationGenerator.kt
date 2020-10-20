@@ -2,8 +2,10 @@ package godot.entrygenerator.generator.property
 
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FunSpec
+import godot.entrygenerator.EntryGenerationType
 import godot.entrygenerator.extension.getAnnotationValue
 import godot.entrygenerator.extension.isCompatibleList
+import godot.entrygenerator.extension.isReference
 import godot.entrygenerator.model.REGISTER_PROPERTY_ANNOTATION
 import godot.entrygenerator.model.REGISTER_PROPERTY_ANNOTATION_RPC_MODE_ARGUMENT
 import godot.entrygenerator.model.REGISTER_PROPERTY_ANNOTATION_VISIBLE_IN_EDITOR_ARGUMENT
@@ -24,20 +26,17 @@ abstract class PropertyRegistrationGenerator {
         properties: List<PropertyDescriptor>,
         registerClassControlFlow: FunSpec.Builder,
         className: ClassName,
-        bindingContext: BindingContext
+        bindingContext: BindingContext,
+        entryGenerationType: EntryGenerationType
     ) {
         properties.forEach { propertyDescriptor ->
-            if (propertyDescriptor.type.isEnum()) {
-                registerEnum(className, propertyDescriptor, bindingContext, registerClassControlFlow)
-            } else if (propertyDescriptor.type.isCompatibleList() && propertyDescriptor.type.arguments.firstOrNull()?.type?.isEnum() == true) {
-                registerEnumList(className, propertyDescriptor, bindingContext, registerClassControlFlow)
-            } else if (
+            when {
+                propertyDescriptor.type.isReference(entryGenerationType) -> registerReference(className, propertyDescriptor, bindingContext, registerClassControlFlow)
+                propertyDescriptor.type.isEnum() -> registerEnum(className, propertyDescriptor, bindingContext, registerClassControlFlow)
+                propertyDescriptor.type.isCompatibleList() && propertyDescriptor.type.arguments.firstOrNull()?.type?.isEnum() == true -> registerEnumList(className, propertyDescriptor, bindingContext, registerClassControlFlow)
                 KotlinBuiltIns.isSetOrNullableSet(propertyDescriptor.type)
-                && propertyDescriptor.type.arguments.firstOrNull()?.type?.isEnum() == true
-            ) {
-                registerEnumFlag(className, propertyDescriptor, bindingContext, registerClassControlFlow)
-            } else {
-                registerProperty(className, propertyDescriptor, bindingContext, registerClassControlFlow)
+                && propertyDescriptor.type.arguments.firstOrNull()?.type?.isEnum() == true -> registerEnumFlag(className, propertyDescriptor, bindingContext, registerClassControlFlow)
+                else -> registerProperty(className, propertyDescriptor, bindingContext, registerClassControlFlow)
             }
         }
     }
@@ -57,6 +56,13 @@ abstract class PropertyRegistrationGenerator {
     )
 
     protected abstract fun registerEnum(
+        className: ClassName,
+        propertyDescriptor: PropertyDescriptor,
+        bindingContext: BindingContext,
+        registerClassControlFlow: FunSpec.Builder
+    )
+
+    protected abstract fun registerReference(
         className: ClassName,
         propertyDescriptor: PropertyDescriptor,
         bindingContext: BindingContext,

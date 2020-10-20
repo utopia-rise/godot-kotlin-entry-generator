@@ -61,6 +61,6 @@ class JvmClassRegistrationGenerator : ClassRegistrationGenerator() {
     override fun registerProperties(properties: List<PropertyDescriptor>, registerClassControlFlow: FunSpec.Builder, className: ClassName, bindingContext: BindingContext) {
         PropertyRegistrationGeneratorProvider
             .provide(EntryGenerationType.JVM)
-            .registerProperties(properties, registerClassControlFlow, className, bindingContext)
+            .registerProperties(properties, registerClassControlFlow, className, bindingContext, EntryGenerationType.JVM)
     }
 }

@@ -5,6 +5,7 @@ import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.MemberName.Companion.member
 import godot.entrygenerator.EntryGenerationType
+import godot.entrygenerator.extension.assignmentPsi
 import godot.entrygenerator.extension.toKtVariantConversionFunctionName
 import godot.entrygenerator.extension.toKtVariantType
 import godot.entrygenerator.generator.property.defaultvalue.DefaultValueExtractorProvider
@@ -38,9 +39,29 @@ class JvmPropertyRegistrationGenerator : PropertyRegistrationGenerator() {
             )
     }
 
+    override fun registerReference(className: ClassName, propertyDescriptor: PropertyDescriptor, bindingContext: BindingContext, registerClassControlFlow: FunSpec.Builder) {
+        val errorText by lazy {
+            "${propertyDescriptor.fqNameSafe} is a KtReference but not registered with the delegate refProperty. KtReferences have to be registered with the delegate refProperty! Example: @RegisterProperty var resourceTest by refProperty(::NavigationMesh)"
+        }
+        requireNotNull(propertyDescriptor.delegateField) { errorText }
+        require(bindingContext.getType(propertyDescriptor.assignmentPsi)?.getJetTypeFqName(false) == "godot.runtime.KtReferenceDelegateProvider") { errorText }
+
+        registerClassControlFlow
+            .addStatement(
+                "property(%L,·%L,·%L,·%T,·%S,·%T,·%S,·isRef·=·true)",
+                getPropertyReference(propertyDescriptor),
+                getGetterValueConverterReference(),
+                getSetterValueConverterReference(propertyDescriptor),
+                propertyDescriptor.type.toKtVariantType(),
+                propertyDescriptor.containingDeclaration.fqNameSafe,
+                PropertyTypeHintProvider.provide(propertyDescriptor, EntryGenerationType.JVM),
+                PropertyHintStringGeneratorProvider.provide(propertyDescriptor, bindingContext, EntryGenerationType.JVM).getHintString()
+            )
+    }
+
     override fun registerProperty(className: ClassName, propertyDescriptor: PropertyDescriptor, bindingContext: BindingContext, registerClassControlFlow: FunSpec.Builder) {
         val (defaultValueStringTemplate, defaultValueStringTemplateValues) = DefaultValueExtractorProvider
-            .provide(propertyDescriptor, bindingContext)
+            .provide(propertyDescriptor, bindingContext, EntryGenerationType.JVM)
             .getDefaultValue(ClassName("godot.core", "KtVariant"))
 
         registerClassControlFlow
@@ -52,7 +73,7 @@ class JvmPropertyRegistrationGenerator : PropertyRegistrationGenerator() {
                 propertyDescriptor.type.toKtVariantType(),
                 propertyDescriptor.type.getJetTypeFqName(false),
                 PropertyTypeHintProvider.provide(propertyDescriptor, EntryGenerationType.JVM),
-                PropertyHintStringGeneratorProvider.provide(propertyDescriptor, bindingContext).getHintString(),
+                PropertyHintStringGeneratorProvider.provide(propertyDescriptor, bindingContext, EntryGenerationType.JVM).getHintString(),
                 *defaultValueStringTemplateValues
             )
     }
