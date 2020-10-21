@@ -44,7 +44,7 @@ class JvmPropertyRegistrationGenerator : PropertyRegistrationGenerator() {
                 getGetterValueConverterReference(),
                 getSetterValueConverterReference(propertyDescriptor),
                 propertyDescriptor.type.toKtVariantType(),
-                propertyDescriptor.type.getJetTypeFqName(false).substringAfterLast("."),
+                propertyDescriptor.type.getJetTypeFqName(false),
                 PropertyTypeHintProvider.provide(propertyDescriptor, EntryGenerationType.JVM),
                 PropertyHintStringGeneratorProvider.provide(propertyDescriptor, bindingContext).getHintString()
             )

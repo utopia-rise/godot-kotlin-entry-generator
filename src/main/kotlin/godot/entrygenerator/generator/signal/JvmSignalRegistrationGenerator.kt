@@ -58,7 +58,7 @@ class JvmSignalRegistrationGenerator : SignalRegistrationGenerator() {
             signalArguments.forEachIndexed { index, type ->
                 add(ClassName("godot.runtime", "KtFunctionArgument"))
                 add(type.toKtVariantType())
-                add(type.getJetTypeFqName(false).substringAfterLast("."))
+                add(type.getJetTypeFqName(false))
                 add(signalArgumentNamesAsLiteralStrings[index]) //out of bounds already checked
             }
         }.toTypedArray()
