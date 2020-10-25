@@ -31,7 +31,7 @@ abstract class PropertyRegistrationGenerator {
     ) {
         properties.forEach { propertyDescriptor ->
             when {
-                propertyDescriptor.type.isReference(entryGenerationType) -> registerReference(className, propertyDescriptor, bindingContext, registerClassControlFlow)
+//                propertyDescriptor.type.isReference(entryGenerationType) -> registerReference(className, propertyDescriptor, bindingContext, registerClassControlFlow)
                 propertyDescriptor.type.isEnum() -> registerEnum(className, propertyDescriptor, bindingContext, registerClassControlFlow)
                 propertyDescriptor.type.isCompatibleList() && propertyDescriptor.type.arguments.firstOrNull()?.type?.isEnum() == true -> registerEnumList(className, propertyDescriptor, bindingContext, registerClassControlFlow)
                 KotlinBuiltIns.isSetOrNullableSet(propertyDescriptor.type)

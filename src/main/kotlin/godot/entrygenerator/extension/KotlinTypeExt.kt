@@ -13,7 +13,7 @@ fun KotlinType.isCoreType(): Boolean {
 
 private fun getReferenceFqName(entryGenerationType: EntryGenerationType) = when (entryGenerationType) {
     EntryGenerationType.KOTLIN_NATIVE -> "godot.Resource"
-    EntryGenerationType.JVM -> "godot.core.KtReference"
+    EntryGenerationType.JVM -> "godot.Reference"
 }
 
 fun KotlinType.isReference(entryGenerationType: EntryGenerationType): Boolean {
