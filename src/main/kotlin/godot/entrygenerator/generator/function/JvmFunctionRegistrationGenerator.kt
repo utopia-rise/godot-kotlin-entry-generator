@@ -36,14 +36,14 @@ class JvmFunctionRegistrationGenerator : FunctionRegistrationGenerator() {
                 functionDescriptor.valueParameters.forEach { valueParameter ->
                     add(ktFunctionArgumentClassName)
                     add(valueParameter.type.toKtVariantType())
-                    add(valueParameter.type.getJetTypeFqName(false).substringAfterLast("."))
+                    add(valueParameter.type.getJetTypeFqName(false))
                     add(valueParameter.name.asString())
                 }
             }
 
             add(ktFunctionArgumentClassName)
             add(returnType.toKtVariantType())
-            add(returnType.getJetTypeFqName(false).substringAfterLast("."))
+            add(returnType.getJetTypeFqName(false))
         }
     }
 
