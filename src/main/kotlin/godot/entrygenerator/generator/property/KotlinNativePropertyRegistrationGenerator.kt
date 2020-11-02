@@ -65,10 +65,6 @@ class KotlinNativePropertyRegistrationGenerator : PropertyRegistrationGenerator(
             )
     }
 
-    override fun registerReference(className: ClassName, propertyDescriptor: PropertyDescriptor, bindingContext: BindingContext, registerClassControlFlow: FunSpec.Builder) {
-        registerProperty(className, propertyDescriptor, bindingContext, registerClassControlFlow)
-    }
-
     override fun registerProperty(className: ClassName, propertyDescriptor: PropertyDescriptor, bindingContext: BindingContext, registerClassControlFlow: FunSpec.Builder) {
         val (defaultValueStringTemplate, defaultValueStringTemplateValues) = DefaultValueExtractorProvider
             .provide(propertyDescriptor, bindingContext, EntryGenerationType.KOTLIN_NATIVE)
