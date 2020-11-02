@@ -1,5 +1,6 @@
 package godot.entrygenerator.generator.property.defaultvalue
 
+import com.squareup.kotlinpoet.ClassName
 import godot.entrygenerator.extension.assignmentPsi
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
@@ -11,7 +12,7 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 
 class EnumFlagDefaultValueExtractor(propertyDescriptor: PropertyDescriptor, bindingContext: BindingContext) : DefaultValueExtractor(propertyDescriptor, bindingContext) {
 
-    override fun getDefaultValue(): Pair<String, Array<out Any>> {
+    override fun getDefaultValue(variantClassName: ClassName): Pair<String, Array<out Any>> {
         if (propertyHintAnnotation == null || propertyHintAnnotation.fqName?.asString() != "godot.annotation.EnumFlag") {
             throw IllegalStateException("The property \"${propertyDescriptor.fqNameSafe}\" is not annotated with @EnumFlag!")
         }

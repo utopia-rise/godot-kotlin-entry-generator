@@ -1,8 +1,9 @@
 package godot.entrygenerator.generator.property.hintstring
 
+import godot.entrygenerator.EntryGenerationType
 import godot.entrygenerator.extension.isCompatibleList
 import godot.entrygenerator.extension.isCoreType
-import godot.entrygenerator.extension.isResource
+import godot.entrygenerator.extension.isReference
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.name.FqName
@@ -13,7 +14,8 @@ object PropertyHintStringGeneratorProvider {
 
     fun provide(
         propertyDescriptor: PropertyDescriptor,
-        bindingContext: BindingContext
+        bindingContext: BindingContext,
+        entryGenerationType: EntryGenerationType
     ): PropertyHintStringGenerator {
         return when {
             KotlinBuiltIns.isInt(propertyDescriptor.type) ->
@@ -63,7 +65,7 @@ object PropertyHintStringGeneratorProvider {
                 propertyDescriptor,
                 bindingContext
             )
-            propertyDescriptor.type.isResource() -> ResourceHintStringGenerator(
+            propertyDescriptor.type.isReference(entryGenerationType) -> ResourceHintStringGenerator(
                 propertyDescriptor,
                 bindingContext
             )

@@ -4,9 +4,8 @@ import com.squareup.kotlinpoet.ClassName
 import godot.entrygenerator.EntryGenerationType
 import godot.entrygenerator.extension.isCompatibleList
 import godot.entrygenerator.extension.isCoreType
-import godot.entrygenerator.extension.isResource
+import godot.entrygenerator.extension.isReference
 import godot.entrygenerator.generator.property.typehint.array.ArrayTypeHintGeneratorProvider
-import godot.entrygenerator.generator.property.typehint.array.KotlinNativeArrayTypeHintGenerator
 import godot.entrygenerator.generator.property.typehint.coretypes.CoreTypeTypeHintGeneratorProvider
 import godot.entrygenerator.generator.property.typehint.primitives.PrimitivesTypeHintGeneratorProvider
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
@@ -73,7 +72,7 @@ object PropertyTypeHintProvider {
                 .provide(entryGenerationType, propertyDescriptor)
                 .getPropertyTypeHint()
 
-            propertyDescriptor.type.isResource() -> when(entryGenerationType) {
+            propertyDescriptor.type.isReference(entryGenerationType) -> when(entryGenerationType) {
                 EntryGenerationType.KOTLIN_NATIVE -> ClassName(
                     "godot.gdnative.godot_property_hint",
                     "GODOT_PROPERTY_HINT_RESOURCE_TYPE"

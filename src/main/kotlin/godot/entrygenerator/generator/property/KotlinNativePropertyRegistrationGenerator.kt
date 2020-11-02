@@ -21,8 +21,8 @@ class KotlinNativePropertyRegistrationGenerator : PropertyRegistrationGenerator(
 
     override fun registerEnumFlag(className: ClassName, propertyDescriptor: PropertyDescriptor, bindingContext: BindingContext, registerClassControlFlow: FunSpec.Builder) {
         val (defaultValueStringTemplate, defaultValueStringTemplateValues) = DefaultValueExtractorProvider
-            .provide(propertyDescriptor, bindingContext)
-            .getDefaultValue()
+            .provide(propertyDescriptor, bindingContext, EntryGenerationType.KOTLIN_NATIVE)
+            .getDefaultValue(ClassName("godot.core", "Variant"))
 
         registerClassControlFlow.addStatement(
             "enumFlagProperty(%S,·%L,·${defaultValueStringTemplate.replace(" ", "·")},·%L,·%T)",
@@ -36,8 +36,8 @@ class KotlinNativePropertyRegistrationGenerator : PropertyRegistrationGenerator(
 
     override fun registerEnumList(className: ClassName, propertyDescriptor: PropertyDescriptor, bindingContext: BindingContext, registerClassControlFlow: FunSpec.Builder) {
         val (defaultValueStringTemplate, defaultValueStringTemplateValues) = DefaultValueExtractorProvider
-            .provide(propertyDescriptor, bindingContext)
-            .getDefaultValue()
+            .provide(propertyDescriptor, bindingContext, EntryGenerationType.KOTLIN_NATIVE)
+            .getDefaultValue(ClassName("godot.core", "Variant"))
 
         registerClassControlFlow.addStatement(
             "enumListProperty(%S,·%L,·${defaultValueStringTemplate.replace(" ", "·")},·%L,·%T)",
@@ -51,8 +51,8 @@ class KotlinNativePropertyRegistrationGenerator : PropertyRegistrationGenerator(
 
     override fun registerEnum(className: ClassName, propertyDescriptor: PropertyDescriptor, bindingContext: BindingContext, registerClassControlFlow: FunSpec.Builder) {
         val (defaultValueStringTemplate, defaultValueStringTemplateValues) = DefaultValueExtractorProvider
-            .provide(propertyDescriptor, bindingContext)
-            .getDefaultValue()
+            .provide(propertyDescriptor, bindingContext, EntryGenerationType.KOTLIN_NATIVE)
+            .getDefaultValue(ClassName("godot.core", "Variant"))
 
         registerClassControlFlow
             .addStatement(
@@ -67,11 +67,11 @@ class KotlinNativePropertyRegistrationGenerator : PropertyRegistrationGenerator(
 
     override fun registerProperty(className: ClassName, propertyDescriptor: PropertyDescriptor, bindingContext: BindingContext, registerClassControlFlow: FunSpec.Builder) {
         val (defaultValueStringTemplate, defaultValueStringTemplateValues) = DefaultValueExtractorProvider
-            .provide(propertyDescriptor, bindingContext)
-            .getDefaultValue()
+            .provide(propertyDescriptor, bindingContext, EntryGenerationType.KOTLIN_NATIVE)
+            .getDefaultValue(ClassName("godot.core", "Variant"))
         val (variantToTypeTemplate, variantToTypeTemplateValue) = getVariantToTypeConverter(propertyDescriptor)
         val (typeToVariantTemplate, typeToVariantTemplateValue) = getTypeToVariantConverter(propertyDescriptor)
-        val hintString = PropertyHintStringGeneratorProvider.provide(propertyDescriptor, bindingContext).getHintString()
+        val hintString = PropertyHintStringGeneratorProvider.provide(propertyDescriptor, bindingContext, EntryGenerationType.KOTLIN_NATIVE).getHintString()
 
         registerClassControlFlow
             .addStatement(
