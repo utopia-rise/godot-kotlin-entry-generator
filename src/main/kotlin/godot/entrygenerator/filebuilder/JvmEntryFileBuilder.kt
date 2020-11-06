@@ -18,6 +18,11 @@ class JvmEntryFileBuilder(bindingContext: BindingContext): EntryFileBuilder(bind
             .receiver(ClassName("godot.runtime.Entry", "Context"))
             .addModifiers(KModifier.OVERRIDE)
 
+        val initEngineTypesFunSpec = FunSpec
+                .builder("initEngineTypes")
+                .receiver(ClassName("godot.runtime.Entry", "Context"))
+                .addModifiers(KModifier.OVERRIDE)
+
         val classRegistryControlFlow = initFunctionSpec
             .beginControlFlow("with(registry)·{") //START: with registry
 
@@ -25,11 +30,13 @@ class JvmEntryFileBuilder(bindingContext: BindingContext): EntryFileBuilder(bind
             .provideClassRegistrationProvider(EntryGenerationType.JVM)
             .registerClasses(classesWithMembers, classRegistryControlFlow, bindingContext)
 
-        classRegistryControlFlow.addStatement("%M()", MemberName("godot", "registerEngineTypes"))
+        initEngineTypesFunSpec.addStatement("%M()", MemberName("godot", "registerEngineTypes"))
+        initEngineTypesFunSpec.addStatement("%M()", MemberName("godot", "registerEngineTypeMethods"))
 
         classRegistryControlFlow.endControlFlow() //END: with registry
 
         entryClassSpec.addFunction(initFunctionSpec.build())
+        entryClassSpec.addFunction(initEngineTypesFunSpec.build())
         entryFileSpec.addType(entryClassSpec.build())
         return this
     }
