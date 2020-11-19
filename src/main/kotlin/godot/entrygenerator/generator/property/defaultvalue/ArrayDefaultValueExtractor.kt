@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.types.typeUtil.isEnum
 
 class ArrayDefaultValueExtractor(propertyDescriptor: PropertyDescriptor, bindingContext: BindingContext) : DefaultValueExtractor(propertyDescriptor, bindingContext) {
 
-    override fun getDefaultValue(variantClassName: ClassName): Pair<String, Array<out Any>> {
+    override fun getDefaultValue(variantClassName: ClassName?): Pair<String, Array<out Any>> {
         return if (propertyDescriptor.type.arguments.firstOrNull()?.type?.isEnum() == true) {
             if (propertyDescriptor.isLateInit || !isVisibleInEditor()) {
                 return "%L" to arrayOf("null")

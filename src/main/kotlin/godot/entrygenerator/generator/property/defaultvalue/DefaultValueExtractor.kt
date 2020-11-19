@@ -32,16 +32,21 @@ open class DefaultValueExtractor(
         )
     }
 
-    open fun getDefaultValue(variantClassName: ClassName): Pair<String, Array<out Any>> {
+    open fun getDefaultValue(variantClassName: ClassName?): Pair<String, Array<out Any>> {
         if (propertyDescriptor.isLateInit || !isVisibleInEditor()) {
             return "%L" to arrayOf("null")
         }
         val defaultValue = getDefaultValueTemplateStringWithTemplateArguments(propertyDescriptor.assignmentPsi)
             ?: throw IllegalStateException("No default value could be extracted for the property ${propertyDescriptor.name} with the expression:\n${propertyDescriptor.findPsi()?.text}\nThis is a bug (but possibly originated by wrong default value usage on your side). Please report it so we can fix it")
-        val params = mutableListOf<Any>()
-        params.add(variantClassName)
-        params.addAll(defaultValue.second)
-        return "%T(${defaultValue.first})" to params.toTypedArray()
+
+        return if (variantClassName != null) {
+            val params = mutableListOf<Any>()
+            params.add(variantClassName)
+            params.addAll(defaultValue.second)
+            "%T(${defaultValue.first})" to params.toTypedArray()
+        } else {
+            defaultValue
+        }
     }
 
     protected fun getDefaultValueTemplateStringWithTemplateArguments(
