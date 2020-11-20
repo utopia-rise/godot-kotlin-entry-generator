@@ -86,4 +86,45 @@ class Entry : Entry() {
 ```  
 
 Kotlin/Native:  
-`TODO(add kotlin native output for this example)`
+```kotlin
+// THIS FILE IS GENERATED! DO NOT EDIT IT MANUALLY! ALL CHANGES TO IT WILL BE OVERWRITTEN ON EACH BUILD
+@file:Suppress("EXPERIMENTAL_API_USAGE")
+
+package godot
+
+/*
+imports omitted for simplicity of this example
+*/
+
+@CName("godot_gdnative_init")
+fun GDNativeInit(options: godot_gdnative_init_options) {
+  Godot.init(options)
+}
+
+@CName("godot_gdnative_terminate")
+fun GDNativeTerminate(options: godot_gdnative_terminate_options) {
+  Godot.terminate(options)
+}
+
+@CName("godot_nativescript_init")
+fun NativeScriptInit(handle: COpaquePointer) {
+  Godot.nativescriptInit(handle)
+  with(ClassRegistry(handle)) {
+    registerClass("example.Invocation", "Spatial", ::Invocation, false) {
+      function("_ready", DISABLED, Invocation::_ready, { Variant() })
+      signal("signalOneParam", mapOf("refresh" to BOOL))
+      property("x", Invocation::x, getTypeToVariantConversionFunction<Int>(), getVariantToTypeConversionFunction<Int>(), INT, Variant(0), true, DISABLED, GODOT_PROPERTY_HINT_NONE, "")
+    }
+    registerClass("example.TextureSample", "Spatial", ::TextureSample, false) {
+      function("_ready", DISABLED, TextureSample::_ready, { Variant() })
+      property("nodePath", TextureSample::nodePath, getTypeToVariantConversionFunction<CoreType>(), getVariantToTypeConversionFunction<NodePath>(), NODE_PATH, null, true, DISABLED, GODOT_PROPERTY_HINT_NONE, "")
+      property("texture", TextureSample::texture, getTypeToVariantConversionFunction<Object>(), getVariantToTypeConversionFunction<godot.Object>(), OBJECT, null, true, DISABLED, GODOT_PROPERTY_HINT_RESOURCE_TYPE, "Texture")
+    }
+  }
+}
+
+@CName("godot_nativescript_terminate")
+fun NativeScriptTerminate(handle: COpaquePointer) {
+  Godot.nativescriptTerminate(handle)
+}
+```
