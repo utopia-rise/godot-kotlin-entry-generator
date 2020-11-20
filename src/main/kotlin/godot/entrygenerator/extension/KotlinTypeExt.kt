@@ -74,7 +74,6 @@ private val coreTypes = listOf(
     "godot.core.PoolColorArray",
     "godot.core.PoolVector2Array",
     "godot.core.PoolVector3Array",
-
     "godot.core.VariantArray",
     "godot.core.ObjectArray",
     "godot.core.EnumArray",
@@ -107,20 +106,6 @@ fun KotlinType?.toKtVariantType(): ClassName {
         this.isBooleanOrNullableBoolean() -> ClassName("godot.core.VariantType", "BOOL")
         this.isCoreType() -> ClassName("godot.core.VariantType", this.getJetTypeFqName(false).substringAfterLast(".").toUpperCase())
         this.isAnyOrNullableAny() || this.supertypes().any { it.isAnyOrNullableAny() } -> ClassName("godot.core.VariantType", "OBJECT")
-        else -> throw IllegalStateException("ReturnType $this cannot be handled by godot")
-    }
-}
-
-fun KotlinType.toKtVariantConversionFunctionName(): String {
-    return when {
-        this.isInt() -> "asInt"
-        this.isLong() -> "asLong"
-        this.isFloat() -> "asFloat"
-        this.isDouble() -> "asDouble"
-        this.getJetTypeFqName(false) == "kotlin.String" -> "asString"
-        this.isBooleanOrNullableBoolean() -> "asBoolean"
-        this.isCoreType() -> "as${this.getJetTypeFqName(false).substringAfterLast(".")}"
-        this.isAnyOrNullableAny() || this.supertypes().any { it.isAnyOrNullableAny() } -> "asObject"
         else -> throw IllegalStateException("ReturnType $this cannot be handled by godot")
     }
 }
