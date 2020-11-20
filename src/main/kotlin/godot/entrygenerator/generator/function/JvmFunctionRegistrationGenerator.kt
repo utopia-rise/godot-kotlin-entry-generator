@@ -4,7 +4,6 @@ import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.MemberName.Companion.member
 import godot.entrygenerator.extension.getCastingStringTemplate
 import godot.entrygenerator.extension.getCastingStringTemplateTypeArg
-import godot.entrygenerator.extension.toKtVariantConversionFunctionName
 import godot.entrygenerator.extension.toKtVariantType
 import org.jetbrains.kotlin.backend.common.serialization.findPackage
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
