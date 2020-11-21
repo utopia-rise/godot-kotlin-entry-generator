@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 
 class EnumFlagDefaultValueExtractor(propertyDescriptor: PropertyDescriptor, bindingContext: BindingContext) : DefaultValueExtractor(propertyDescriptor, bindingContext) {
 
-    override fun getDefaultValue(variantClassName: ClassName): Pair<String, Array<out Any>> {
+    override fun getDefaultValue(variantClassName: ClassName?): Pair<String, Array<out Any>> {
         if (propertyHintAnnotation == null || propertyHintAnnotation.fqName?.asString() != "godot.annotation.EnumFlag") {
             throw IllegalStateException("The property \"${propertyDescriptor.fqNameSafe}\" is not annotated with @EnumFlag!")
         }

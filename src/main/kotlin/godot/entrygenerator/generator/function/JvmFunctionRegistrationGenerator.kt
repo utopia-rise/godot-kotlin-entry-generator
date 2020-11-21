@@ -1,14 +1,19 @@
 package godot.entrygenerator.generator.function
 
-import com.squareup.kotlinpoet.ClassName
-import com.squareup.kotlinpoet.CodeBlock
+import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.MemberName.Companion.member
-import godot.entrygenerator.extension.toKtVariantConversionFunctionName
+import godot.entrygenerator.extension.getCastingStringTemplate
+import godot.entrygenerator.extension.getCastingStringTemplateTypeArg
 import godot.entrygenerator.extension.toKtVariantType
 import org.jetbrains.kotlin.backend.common.serialization.findPackage
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.js.descriptorUtils.getJetTypeFqName
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
+import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.asSimpleType
+import org.jetbrains.kotlin.types.typeUtil.isFloat
+import org.jetbrains.kotlin.types.typeUtil.isInt
+import org.jetbrains.kotlin.types.typeUtil.isLong
 
 class JvmFunctionRegistrationGenerator : FunctionRegistrationGenerator() {
 
@@ -29,9 +34,7 @@ class JvmFunctionRegistrationGenerator : FunctionRegistrationGenerator() {
 
             if (functionDescriptor.valueParameters.isNotEmpty()) {
                 functionDescriptor.valueParameters.forEach { valueParameter ->
-                    val ktVariantClassName = ClassName("godot.core", "KtVariant")
-                    val conversionFunction = ktVariantClassName.member(valueParameter.type.toKtVariantConversionFunctionName()).reference()
-                    add(conversionFunction)
+                    add(valueParameter.type.getCastingStringTemplateTypeArg())
                 }
                 functionDescriptor.valueParameters.forEach { valueParameter ->
                     add(ktFunctionArgumentClassName)
@@ -54,8 +57,8 @@ class JvmFunctionRegistrationGenerator : FunctionRegistrationGenerator() {
             append("function(%L,·%L") //functionReference, returnTypeConverterReference
 
             if (functionDescriptor.valueParameters.isNotEmpty()) {
-                functionDescriptor.valueParameters.forEach { _ ->
-                    append(",·%L") //type mapping function
+                functionDescriptor.valueParameters.forEach { param ->
+                    append(",·{·any:·Any·->·${param.type.getCastingStringTemplate()}·}") //type mapping function
                 }
                 functionDescriptor.valueParameters.forEach { _ ->
                     append(",·%T(%T,·%S,·%S)") //argument KtFunctionArgument
@@ -73,8 +76,8 @@ class JvmFunctionRegistrationGenerator : FunctionRegistrationGenerator() {
     }
 
     private fun getReturnValueConverterReference(functionDescriptor: FunctionDescriptor): CodeBlock {
-        return ClassName("godot.core", "KtVariant")
-            .constructorReference()
+        return MemberName("godot.core", "getVariantType")
+            .reference()
     }
 
     private fun getContainingClassName(functionDescriptor: FunctionDescriptor): ClassName {
@@ -82,56 +85,4 @@ class JvmFunctionRegistrationGenerator : FunctionRegistrationGenerator() {
         val className = functionDescriptor.containingDeclaration.name.asString()
         return ClassName(classPackage, className)
     }
-
-//    private fun getReturnsDsl(functionDescriptor: FunctionDescriptor): CodeBlock {
-//        val returnsType = getReturnType(functionDescriptor)
-//        return CodeBlock
-//            .builder()
-//            .beginControlFlow("returns =")
-//            .addStatement("type = %T", returnsType)
-//            .addStatement("className = %S", requireNotNull(functionDescriptor.returnType?.getJetTypeFqName(false)?.substringAfterLast(".")) { "ReturnType cannot be null. Usually this means there was an error in the kotlin compilation. Try a clean build and submit a bug if this does not help" })
-//            .endControlFlow()
-//            .build()
-//    }
-
-//    private fun getReturnType(functionDescriptor: FunctionDescriptor): ClassName {
-//        return functionDescriptor
-//            .returnType
-//            .toKtVariantType()
-//    }
-
-//    private fun getArgsDsl(functionDescriptor: FunctionDescriptor): CodeBlock {
-//        val args = functionDescriptor.valueParameters
-//
-//        val argsCodeBlock = CodeBlock
-//            .builder()
-//
-//        if (args.size != 1) {
-//            argsCodeBlock.addStatement("args = arrayOf(")
-//        }
-//
-//        args.forEachIndexed { index, argument ->
-//            requireNotNull(argument) { "An argument type of function ${functionDescriptor.fqNameSafe} is null. This means there was an error in the type resolving in the compilation process. Try a clean build and submit a bug if this does not help" }
-//            if (index != 0) {
-//                argsCodeBlock.add(",")
-//            }
-//            val controlFlowString = if (args.size == 1) {
-//                "arg ="
-//            } else {
-//                ""
-//            }
-//            argsCodeBlock
-//                .beginControlFlow(controlFlowString)
-//                .addStatement("name = %S", argument.name)
-//                .addStatement("type = %T", argument.type.toKtVariantType())
-//                .addStatement("className = %S", argument.type.getJetTypeFqName(false).substringAfterLast("."))
-//                .endControlFlow()
-//        }
-//
-//        if (args.size != 1) {
-//            argsCodeBlock.addStatement(")")
-//        }
-//
-//        return argsCodeBlock.build()
-//    }
 }
