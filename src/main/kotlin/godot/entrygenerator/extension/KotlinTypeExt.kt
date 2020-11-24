@@ -96,7 +96,7 @@ private val coreTypes = listOf(
 )
 
 
-fun KotlinType?.toKtVariantType(): ClassName {
+fun KotlinType?.toReturnKtVariantType(): ClassName {
     return when {
         this == null -> throw IllegalStateException("Type is null")
         this.isUnit() -> ClassName("godot.core.VariantType", "NIL")
@@ -110,19 +110,15 @@ fun KotlinType?.toKtVariantType(): ClassName {
     }
 }
 
-fun KotlinType.getCastingStringTemplate() = when {
-    isInt() -> "(any·as·%T).toInt()"
-    isFloat() -> "(any·as·%T).toFloat()"
-    else -> "any·as·%T"
-}
-
-fun KotlinType.getCastingStringTemplateTypeArg() = when {
-    isInt() -> Long::class.asClassName()
-    isFloat() -> Double::class.asClassName()
-    else -> {
-        val fqName = getJetTypeFqName(false)
-        val packagePath = fqName.substringBeforeLast(".")
-        val className = fqName.substringAfterLast(".")
-        ClassName(packagePath, className)
-    }
+fun KotlinType.toParameterKtVariantType() = when {
+    isInt() -> ClassName("godot.core.VariantType", "JVM_INT")
+    isLong() -> ClassName("godot.core.VariantType", "LONG")
+    isFloat() -> ClassName("godot.core.VariantType", "JVM_FLOAT")
+    isDouble() -> ClassName("godot.core.VariantType", "DOUBLE")
+    getJetTypeFqName(false) == "kotlin.String" -> ClassName("godot.core.VariantType", "STRING")
+    isBooleanOrNullableBoolean() -> ClassName("godot.core.VariantType", "BOOL")
+    isCoreType() -> ClassName("godot.core.VariantType", this.getJetTypeFqName(false).substringAfterLast(".").toUpperCase())
+    isUnit() -> ClassName("godot.core.VariantType", "NIL")
+    isAnyOrNullableAny() || this.supertypes().any { it.isAnyOrNullableAny() } -> ClassName("godot.core.VariantType", "OBJECT")
+    else -> throw IllegalStateException("ParameterType $this cannot be handled by godot")
 }

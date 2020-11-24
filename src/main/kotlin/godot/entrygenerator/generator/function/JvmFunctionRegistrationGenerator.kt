@@ -2,18 +2,11 @@ package godot.entrygenerator.generator.function
 
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.MemberName.Companion.member
-import godot.entrygenerator.extension.getCastingStringTemplate
-import godot.entrygenerator.extension.getCastingStringTemplateTypeArg
-import godot.entrygenerator.extension.toKtVariantType
+import godot.entrygenerator.extension.toParameterKtVariantType
+import godot.entrygenerator.extension.toReturnKtVariantType
 import org.jetbrains.kotlin.backend.common.serialization.findPackage
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.js.descriptorUtils.getJetTypeFqName
-import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
-import org.jetbrains.kotlin.types.KotlinType
-import org.jetbrains.kotlin.types.asSimpleType
-import org.jetbrains.kotlin.types.typeUtil.isFloat
-import org.jetbrains.kotlin.types.typeUtil.isInt
-import org.jetbrains.kotlin.types.typeUtil.isLong
 
 class JvmFunctionRegistrationGenerator : FunctionRegistrationGenerator() {
 
@@ -30,22 +23,22 @@ class JvmFunctionRegistrationGenerator : FunctionRegistrationGenerator() {
         }
         return buildList {
             add(getFunctionReference(functionDescriptor))
-            add(getReturnValueConverterReference(functionDescriptor))
+            add(functionDescriptor.returnType?.toParameterKtVariantType() ?: ClassName("godot.core.VariantType", "NIL"))
 
             if (functionDescriptor.valueParameters.isNotEmpty()) {
                 functionDescriptor.valueParameters.forEach { valueParameter ->
-                    add(valueParameter.type.getCastingStringTemplateTypeArg())
+                    add(valueParameter.type.toParameterKtVariantType())
                 }
                 functionDescriptor.valueParameters.forEach { valueParameter ->
                     add(ktFunctionArgumentClassName)
-                    add(valueParameter.type.toKtVariantType())
+                    add(valueParameter.type.toReturnKtVariantType())
                     add(valueParameter.type.getJetTypeFqName(false))
                     add(valueParameter.name.asString())
                 }
             }
 
             add(ktFunctionArgumentClassName)
-            add(returnType.toKtVariantType())
+            add(returnType.toReturnKtVariantType())
             add(returnType.getJetTypeFqName(false))
         }
     }
@@ -54,11 +47,11 @@ class JvmFunctionRegistrationGenerator : FunctionRegistrationGenerator() {
         functionDescriptor: FunctionDescriptor
     ): String {
         return buildString {
-            append("function(%L,·%L") //functionReference, returnTypeConverterReference
+            append("function(%L,·%T") //functionReference, returnTypeConverterReference
 
             if (functionDescriptor.valueParameters.isNotEmpty()) {
                 functionDescriptor.valueParameters.forEach { param ->
-                    append(",·{·any:·Any·->·${param.type.getCastingStringTemplate()}·}") //type mapping function
+                    append(",·%T") //Variant type
                 }
                 functionDescriptor.valueParameters.forEach { _ ->
                     append(",·%T(%T,·%S,·%S)") //argument KtFunctionArgument
@@ -72,11 +65,6 @@ class JvmFunctionRegistrationGenerator : FunctionRegistrationGenerator() {
     private fun getFunctionReference(functionDescriptor: FunctionDescriptor): CodeBlock {
         return getContainingClassName(functionDescriptor)
             .member(functionDescriptor.name.asString())
-            .reference()
-    }
-
-    private fun getReturnValueConverterReference(functionDescriptor: FunctionDescriptor): CodeBlock {
-        return MemberName("godot.core", "getVariantType")
             .reference()
     }
 
