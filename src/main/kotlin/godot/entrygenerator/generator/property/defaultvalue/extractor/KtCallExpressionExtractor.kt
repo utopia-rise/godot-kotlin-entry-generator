@@ -67,6 +67,7 @@ object KtCallExpressionExtractor {
                 //Note: kotlin collections only as constructor arguments or function params. TypeToVariantAsClassNameMapper already enshures that they are not registered as property types
                 ref is DeserializedSimpleFunctionDescriptor && (
                         ref.fqNameSafe.asString().matches(Regex("^godot\\.core\\..*(ArrayOf|Array)\$"))
+                                || ref.fqNameSafe.asString().matches(Regex("^godot\\.core\\..*(dictionaryOf|Dictionary)\$"))
                                 || ref.findPackage().fqName.asString() == "kotlin.collections"
                         ) -> {
                     val fqName = ref.fqNameSafe
