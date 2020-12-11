@@ -17,7 +17,7 @@ repositories {
 dependencies {
     implementation(kotlin("stdlib"))
     compileOnly(kotlin("compiler-embeddable"))
-    implementation("com.squareup:kotlinpoet:${DependenciesVersions.kotlinPoetVersion}")
+    api("com.squareup:kotlinpoet:${DependenciesVersions.kotlinPoetVersion}") //api so the dependency is also available for entry generator extensions
 }
 
 tasks {

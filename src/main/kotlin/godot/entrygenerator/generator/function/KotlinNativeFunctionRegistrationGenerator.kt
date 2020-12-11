@@ -3,9 +3,13 @@ package godot.entrygenerator.generator.function
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.MemberName.Companion.member
 import com.squareup.kotlinpoet.TypeName
+import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.asTypeName
+import godot.entrygenerator.extension.EntryGeneratorExtension
 import godot.entrygenerator.extension.getFirstRegistrableTypeAsFqNameStringOrNull
+import godot.entrygenerator.model.ClassWithMembers
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
+import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.js.descriptorUtils.getJetTypeFqName
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
@@ -29,6 +33,16 @@ class KotlinNativeFunctionRegistrationGenerator : FunctionRegistrationGenerator(
             typeToVariantConverter.second,
             *variantToTypeConverterList.second
         )
+    }
+
+    override fun registerThroughExtensionHelperAbstraction(
+        functionDescriptor: FunctionDescriptor,
+        className: ClassName,
+        extensionToDescriptors: Map<EntryGeneratorExtension, Set<ClassWithMembers>>,
+        extensionHelperObjectSpec: TypeSpec.Builder?,
+        messageCollector: MessageCollector
+    ): Pair<String, Array<Any>> {
+        TODO("Not yet implemented")
     }
 
     private fun getFunctionTemplateString(
