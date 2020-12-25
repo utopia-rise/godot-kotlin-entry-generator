@@ -17,10 +17,15 @@ import org.jetbrains.kotlin.resolve.BindingContext
 
 class JvmPropertyRegistrationGenerator : PropertyRegistrationGenerator() {
     override fun registerEnumFlag(className: ClassName, propertyDescriptor: PropertyDescriptor, bindingContext: BindingContext, registerClassControlFlow: FunSpec.Builder) {
+        val (defaultValueStringTemplate, defaultValueStringTemplateValues) = DefaultValueExtractorProvider
+            .provide(propertyDescriptor, bindingContext, EntryGenerationType.JVM)
+            .getDefaultValue(null)
+
         registerClassControlFlow
             .addStatement(
-                "enumFlagProperty(%L)",
-                getPropertyReference(propertyDescriptor)
+                "enumFlagProperty(%L,·${defaultValueStringTemplate.replace(" ", "·")})",
+                getPropertyReference(propertyDescriptor),
+                *defaultValueStringTemplateValues
             )
     }
 

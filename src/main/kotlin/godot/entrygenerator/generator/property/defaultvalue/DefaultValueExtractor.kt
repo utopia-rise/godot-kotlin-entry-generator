@@ -56,7 +56,7 @@ open class DefaultValueExtractor(
             //normal constant expression like: val foo = 1
             expression is KtConstantExpression -> KtConstantExpressionExtractor.extract(expression)
             //string assignments but no string templations like ("${someVarToPutInString}"): val foo = "this is awesome"
-            expression is KtStringTemplateExpression && !expression.hasInterpolation() -> KtStringTemplateExpressionExtractor.extract(expression)
+            expression is KtStringTemplateExpression -> KtStringTemplateExpressionExtractor.extract(expression)
             expression is KtDotQualifiedExpression -> KtDotQualifiedExpressionExtractor.extract(bindingContext, expression)
             //call expressions like constructor calls or function calls
             expression is KtCallExpression -> KtCallExpressionExtractor.extract(bindingContext, expression, ::getDefaultValueTemplateStringWithTemplateArguments)
