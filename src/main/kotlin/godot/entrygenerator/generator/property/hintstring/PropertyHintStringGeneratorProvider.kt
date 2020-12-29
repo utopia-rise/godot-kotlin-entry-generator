@@ -6,6 +6,7 @@ import godot.entrygenerator.extension.isCoreType
 import godot.entrygenerator.extension.isReference
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
+import org.jetbrains.kotlin.js.descriptorUtils.getJetTypeFqName
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.types.typeUtil.isEnum
@@ -73,7 +74,7 @@ object PropertyHintStringGeneratorProvider {
                 propertyDescriptor,
                 bindingContext
             )
-            KotlinBuiltIns.isSetOrNullableSet((propertyDescriptor.type)) -> EnumHintStringGenerator(
+            propertyDescriptor.type.getJetTypeFqName(false).matches(Regex("^kotlin\\.collections\\..*Set\$")) -> EnumHintStringGenerator(
                 propertyDescriptor,
                 bindingContext
             )

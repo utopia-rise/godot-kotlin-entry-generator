@@ -11,19 +11,21 @@ import godot.entrygenerator.generator.property.defaultvalue.DefaultValueExtracto
 import godot.entrygenerator.generator.property.hintstring.PropertyHintStringGeneratorProvider
 import godot.entrygenerator.generator.property.typehint.PropertyTypeHintProvider
 import org.jetbrains.kotlin.backend.common.serialization.findPackage
-import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.js.descriptorUtils.getJetTypeFqName
-import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 
 class JvmPropertyRegistrationGenerator : PropertyRegistrationGenerator() {
     override fun registerEnumFlag(className: ClassName, propertyDescriptor: PropertyDescriptor, bindingContext: BindingContext, registerClassControlFlow: FunSpec.Builder) {
+        val (defaultValueStringTemplate, defaultValueStringTemplateValues) = DefaultValueExtractorProvider
+            .provide(propertyDescriptor, bindingContext, EntryGenerationType.JVM)
+            .getDefaultValue(null)
+
         registerClassControlFlow
             .addStatement(
-                "enumFlagProperty(%L)",
-                getPropertyReference(propertyDescriptor)
+                "enumFlagProperty(%L,·${defaultValueStringTemplate.replace(" ", "·")})",
+                getPropertyReference(propertyDescriptor),
+                *defaultValueStringTemplateValues
             )
     }
 
@@ -32,10 +34,15 @@ class JvmPropertyRegistrationGenerator : PropertyRegistrationGenerator() {
     }
 
     override fun registerEnum(className: ClassName, propertyDescriptor: PropertyDescriptor, bindingContext: BindingContext, registerClassControlFlow: FunSpec.Builder) {
+        val (defaultValueStringTemplate, defaultValueStringTemplateValues) = DefaultValueExtractorProvider
+            .provide(propertyDescriptor, bindingContext, EntryGenerationType.JVM)
+            .getDefaultValue(null)
+
         registerClassControlFlow
             .addStatement(
-                "enumProperty(%L)",
-                getPropertyReference(propertyDescriptor)
+                "enumProperty(%L,·${defaultValueStringTemplate.replace(" ", "·")})",
+                getPropertyReference(propertyDescriptor),
+                *defaultValueStringTemplateValues
             )
     }
 
@@ -46,11 +53,10 @@ class JvmPropertyRegistrationGenerator : PropertyRegistrationGenerator() {
 
         registerClassControlFlow
             .addStatement(
-                "property(%L,·%L,·{·any:·Any·->·${propertyDescriptor.type.getCastingStringTemplate()}·},·%T,·%S,·%T,·%S,·${defaultValueStringTemplate.replace(" ", "·")})",
+                "property(%L,·%T,·%T,·%S,·%T,·%S,·${defaultValueStringTemplate.replace(" ", "·")})",
                 getPropertyReference(propertyDescriptor),
-                getGetterValueConverterReference(),
-                propertyDescriptor.type.getCastingStringTemplateTypeArg(),
-                propertyDescriptor.type.toKtVariantType(),
+                propertyDescriptor.type.toParameterKtVariantType(),
+                propertyDescriptor.type.toReturnKtVariantType(),
                 propertyDescriptor.type.getJetTypeFqName(false),
                 PropertyTypeHintProvider.provide(propertyDescriptor, EntryGenerationType.JVM),
                 PropertyHintStringGeneratorProvider.provide(propertyDescriptor, bindingContext, EntryGenerationType.JVM).getHintString(),
@@ -61,11 +67,6 @@ class JvmPropertyRegistrationGenerator : PropertyRegistrationGenerator() {
     private fun getPropertyReference(propertyDescriptor: PropertyDescriptor): CodeBlock {
         return getContainingClassName(propertyDescriptor)
             .member(propertyDescriptor.name.asString())
-            .reference()
-    }
-
-    private fun getGetterValueConverterReference(): CodeBlock {
-        return MemberName("godot.core", "getVariantType")
             .reference()
     }
 

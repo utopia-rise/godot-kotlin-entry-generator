@@ -5,5 +5,5 @@ import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 object KtStringTemplateExpressionExtractor {
 
     fun extract(expression: KtStringTemplateExpression) =
-        "%S" to arrayOf(expression.text.removeSurrounding("\""))
+        "%P" to arrayOf(expression.text.removeSurrounding("\""))
 }

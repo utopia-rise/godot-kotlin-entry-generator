@@ -10,6 +10,7 @@ import godot.entrygenerator.generator.property.typehint.coretypes.CoreTypeTypeHi
 import godot.entrygenerator.generator.property.typehint.primitives.PrimitivesTypeHintGeneratorProvider
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
+import org.jetbrains.kotlin.js.descriptorUtils.getJetTypeFqName
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.types.typeUtil.isEnum
 
@@ -83,7 +84,16 @@ object PropertyTypeHintProvider {
                 )
             }
             propertyDescriptor.type.isCompatibleList() -> ArrayTypeHintGeneratorProvider.provide(entryGenerationType, propertyDescriptor).getPropertyTypeHint()
-            KotlinBuiltIns.isSetOrNullableSet((propertyDescriptor.type)) -> throw UnsupportedOperationException("Hint type for enum is always the same, so it is handled by binding at runtime")
+            propertyDescriptor.type.getJetTypeFqName(false).matches(Regex("^kotlin\\.collections\\..*Set\$")) -> when(entryGenerationType) {
+                EntryGenerationType.KOTLIN_NATIVE -> ClassName(
+                    "godot.gdnative.godot_property_hint",
+                    "GODOT_PROPERTY_HINT_RESOURCE_TYPE"
+                )
+                EntryGenerationType.JVM -> ClassName(
+                    "godot.core.PropertyHint",
+                    "RESOURCE_TYPE"
+                )
+            }
             else -> throw IllegalStateException("There is no type hint generator for the property descriptor $propertyDescriptor")
         }
     }

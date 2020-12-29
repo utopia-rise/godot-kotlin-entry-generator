@@ -30,6 +30,7 @@ class JvmEntryFileBuilder(bindingContext: BindingContext): EntryFileBuilder(bind
             .provideClassRegistrationProvider(EntryGenerationType.JVM)
             .registerClasses(classesWithMembers, classRegistryControlFlow, bindingContext)
 
+        initEngineTypesFunSpec.addStatement("%M()", MemberName("godot", "registerVariantMapping"))
         initEngineTypesFunSpec.addStatement("%M()", MemberName("godot", "registerEngineTypes"))
         initEngineTypesFunSpec.addStatement("%M()", MemberName("godot", "registerEngineTypeMethods"))
 

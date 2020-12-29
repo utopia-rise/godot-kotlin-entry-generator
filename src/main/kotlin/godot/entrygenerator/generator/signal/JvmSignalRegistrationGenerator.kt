@@ -5,7 +5,7 @@ import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.MemberName.Companion.member
 import godot.entrygenerator.extension.assignmentPsi
-import godot.entrygenerator.extension.toKtVariantType
+import godot.entrygenerator.extension.toReturnKtVariantType
 import org.jetbrains.kotlin.backend.common.serialization.findPackage
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.js.descriptorUtils.getJetTypeFqName
@@ -57,7 +57,7 @@ class JvmSignalRegistrationGenerator : SignalRegistrationGenerator() {
             //a KtFunctionArgument per signal argument
             signalArguments.forEachIndexed { index, type ->
                 add(ClassName("godot.runtime", "KtFunctionArgument"))
-                add(type.toKtVariantType())
+                add(type.toReturnKtVariantType())
                 add(type.getJetTypeFqName(false))
                 add(signalArgumentNamesAsLiteralStrings[index]) //out of bounds already checked
             }

@@ -1,5 +1,11 @@
 package godot.entrygenerator.extension
 
+fun String.camelToSnakeCase(): String {
+    return "(?<=[a-zA-Z0-9])[A-Z]".toRegex().replace(this) {
+        "_${it.value}"
+    }
+}
+
 fun String.isGodotPrimitive() =
     when (this) {
         "kotlin.Int",
