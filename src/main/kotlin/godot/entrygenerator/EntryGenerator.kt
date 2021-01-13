@@ -5,12 +5,14 @@ import godot.entrygenerator.compiler.CompilerEnvironmentProvider
 import godot.entrygenerator.filebuilder.EntryFileBuilderProvider
 import godot.entrygenerator.generator.GdnsGenerator
 import godot.entrygenerator.generator.ServiceGenerator
+import godot.entrygenerator.model.ClassWithMembers
 import godot.entrygenerator.transformer.transformTypeDeclarationsToClassWithMembers
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import java.io.File
 
 object EntryGenerator {
@@ -74,11 +76,8 @@ object EntryGenerator {
             .builder("init")
             .receiver(ClassName("godot.runtime.Entry", "Context"))
             .addModifiers(KModifier.OVERRIDE)
-            .beginControlFlow("with(registry)·{") //START: with registry
 
-        addCallsToExistingEntryFilesToMainEntryRegistry(outputPath, mainEntryRegistryControlFlow)
-
-        mainEntryRegistryControlFlow.endControlFlow() //END: with registry
+        addCallsToExistingEntryFilesToMainEntryRegistry(outputPath, setOf(), mainEntryRegistryControlFlow)
 
         FileSpec
             .builder("godot", "MainEntry")
@@ -104,7 +103,8 @@ object EntryGenerator {
             .writeTo(File(outputPath))
     }
 
-    internal fun addCallsToExistingEntryFilesToMainEntryRegistry(outputPath: String, mainEntryRegistryControlFlow: FunSpec.Builder) {
+    internal fun addCallsToExistingEntryFilesToMainEntryRegistry(outputPath: String, classesWithMembersInCurrentCompilationRound: Set<ClassWithMembers>, mainEntryRegistryControlFlow: FunSpec.Builder) {
+        val classesFqNamesInCurrentCompilationRound = classesWithMembersInCurrentCompilationRound.map { it.classDescriptor.fqNameSafe.asString() }
         File(outputPath)
             .walkTopDown()
             .filter { it.isFile && it.exists() && it.extension == "kt" }
@@ -114,10 +114,11 @@ object EntryGenerator {
                 } else null
             }
             .filterNotNull()
+            .filter { classFqName -> !classesFqNamesInCurrentCompilationRound.contains(classFqName) }
             .forEach { classFqName ->
                 val packagePath = classFqName.substringBeforeLast(".")
                 val classNameAsString = classFqName.substringAfterLast(".")
-                mainEntryRegistryControlFlow.addStatement("%T.register(this)", ClassName("godot.$packagePath", "${classNameAsString}Registrar"))
+                mainEntryRegistryControlFlow.addStatement("%T.register(registry)", ClassName("godot.$packagePath", "${classNameAsString}Registrar"))
             }
     }
 }

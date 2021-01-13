@@ -99,7 +99,7 @@ abstract class ClassRegistrationGenerator {
                 .writeTo(File(outputPath))
 
             mainEntryRegistryControlFlow
-                .addStatement("%T.register(this)", ClassName("godot.$packagePath", "${classNameAsString}Registrar"))
+                .addStatement("%T.register(registry)", ClassName("godot.$packagePath", "${classNameAsString}Registrar"))
         }
     }
 
