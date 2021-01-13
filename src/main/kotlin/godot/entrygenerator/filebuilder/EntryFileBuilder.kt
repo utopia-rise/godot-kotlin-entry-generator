@@ -7,7 +7,7 @@ import java.io.File
 
 abstract class EntryFileBuilder(val bindingContext: BindingContext) {
     protected val entryFileSpec = FileSpec
-        .builder("godot", "MainEntry")
+        .builder("godot", "Entry")
         .addComment("THIS FILE IS GENERATED! DO NOT EDIT IT MANUALLY! ALL CHANGES TO IT WILL BE OVERWRITTEN ON EACH BUILD")
 
     abstract fun registerClassesWithMembers(classesWithMembers: Set<ClassWithMembers>, outputPath: String): EntryFileBuilder

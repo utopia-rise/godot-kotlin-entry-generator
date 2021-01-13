@@ -67,7 +67,7 @@ object EntryGenerator {
             .filter { it.isFile && it.exists() && it.extension == "kt" }
             .forEach {
                 val fqName = it.absolutePath.removePrefix(outputPath).removePrefix("/godot/").replace("/", ".").removeSuffix("Entry.kt")
-                if (!userClassesFqNames.contains(fqName) && it.name != "MainEntry") {
+                if (!userClassesFqNames.contains(fqName) && it.name != "Entry") {
                     it.delete()
                 }
             }
@@ -80,7 +80,7 @@ object EntryGenerator {
         addCallsToExistingEntryFilesToMainEntryRegistry(outputPath, setOf(), mainEntryRegistryControlFlow)
 
         FileSpec
-            .builder("godot", "MainEntry")
+            .builder("godot", "Entry")
             .addComment("THIS FILE IS GENERATED! DO NOT EDIT IT MANUALLY! ALL CHANGES TO IT WILL BE OVERWRITTEN ON EACH BUILD")
             .addType(
                 TypeSpec
@@ -109,7 +109,7 @@ object EntryGenerator {
             .walkTopDown()
             .filter { it.isFile && it.exists() && it.extension == "kt" }
             .map { entryFile ->
-                if (entryFile.name != "MainEntry") {
+                if (entryFile.name != "Entry") {
                     entryFile.absolutePath.removePrefix(outputPath).removePrefix("/godot/").replace("/", ".").removeSuffix("Entry.kt")
                 } else null
             }
