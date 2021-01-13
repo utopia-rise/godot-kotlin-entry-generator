@@ -10,6 +10,6 @@ object ServiceGenerator {
             serviceFile.delete()
         }
 
-        serviceFile.writeText("godot.Entry")
+        serviceFile.writeText("godot.MainEntry")
     }
 }

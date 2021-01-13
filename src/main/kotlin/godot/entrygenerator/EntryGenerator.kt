@@ -3,6 +3,7 @@ package godot.entrygenerator
 import godot.entrygenerator.filebuilder.EntryFileBuilderProvider
 import godot.entrygenerator.generator.GdnsGenerator
 import godot.entrygenerator.generator.ServiceGenerator
+import godot.entrygenerator.model.ClassWithMembers
 import godot.entrygenerator.transformer.transformTypeDeclarationsToClassWithMembers
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
@@ -11,7 +12,7 @@ import org.jetbrains.kotlin.resolve.BindingContext
 
 object EntryGenerator {
 
-    fun generateEntryFile(
+    fun generateEntryFiles(
         generationType: EntryGenerationType,
         bindingContext: BindingContext,
         outputPath: String,
@@ -20,14 +21,16 @@ object EntryGenerator {
         functions: Set<FunctionDescriptor>,
         signals: Set<PropertyDescriptor>
     ) {
-        EntryFileBuilderProvider.provideEntryFileBuilder(generationType, bindingContext)
+        EntryFileBuilderProvider
+            .provideMainEntryFileBuilder(generationType, bindingContext)
             .registerClassesWithMembers(
                 transformTypeDeclarationsToClassWithMembers(
                     classes,
                     properties,
                     functions,
                     signals
-                )
+                ),
+                outputPath
             )
             .build(outputPath)
     }
