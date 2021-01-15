@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
+import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperClassNotAny
 import java.io.File
 
 abstract class ClassRegistrationGenerator {
@@ -53,6 +54,12 @@ abstract class ClassRegistrationGenerator {
             val packagePath = classWithMembers.classDescriptor.fqNameSafe.parent().asString()
             val className = ClassName(packagePath, classNameAsString)
             val superClass = classWithMembers.classDescriptor.getSuperTypeNameAsString()
+
+            getMembersOfUserDefinedSuperClasses(classWithMembers, classesWithMembers).let { (functions, properties, signals) ->
+                classWithMembers.functions.addAll(functions)
+                classWithMembers.properties.addAll(properties)
+                classWithMembers.signals.addAll(signals)
+            }
 
             val registerClassControlFlow = provideRegisterClassControlFlow(
                 classWithMembers,
@@ -100,6 +107,35 @@ abstract class ClassRegistrationGenerator {
 
             mainEntryRegistryControlFlow
                 .addStatement("%T.register(registry)", ClassName("godot.$packagePath", "${classNameAsString}Registrar"))
+        }
+    }
+
+    data class MemberOfSuperClassesContainer(
+        val functions: MutableList<FunctionDescriptor> = mutableListOf(),
+        val properties: MutableList<PropertyDescriptor> = mutableListOf(),
+        val signals: MutableList<PropertyDescriptor> = mutableListOf()
+    )
+
+    private tailrec fun getMembersOfUserDefinedSuperClasses(
+        classWithMembers: ClassWithMembers,
+        classesWithMembers: Set<ClassWithMembers>,
+        memberOfSuperClassesContainer: MemberOfSuperClassesContainer = MemberOfSuperClassesContainer()
+    ): MemberOfSuperClassesContainer {
+        val superClass = classWithMembers
+            .classDescriptor
+            .getSuperClassNotAny()
+
+        return if (superClass == null || !classesWithMembers.map { it.classDescriptor }.contains(superClass)) {
+            memberOfSuperClassesContainer
+        } else {
+            val superClassWithMembers = classesWithMembers
+                .first { it.classDescriptor == superClass }
+
+            memberOfSuperClassesContainer.functions.addAll(superClassWithMembers.functions)
+            memberOfSuperClassesContainer.properties.addAll(superClassWithMembers.properties)
+            memberOfSuperClassesContainer.signals.addAll(superClassWithMembers.signals)
+
+            getMembersOfUserDefinedSuperClasses(superClassWithMembers, classesWithMembers, memberOfSuperClassesContainer)
         }
     }
 
