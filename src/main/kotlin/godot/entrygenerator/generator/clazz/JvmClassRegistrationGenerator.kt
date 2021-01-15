@@ -14,12 +14,13 @@ import org.jetbrains.kotlin.resolve.BindingContext
 
 class JvmClassRegistrationGenerator : ClassRegistrationGenerator() {
 
-    override fun provideRegisterClassControlFlow(classWithMembers: ClassWithMembers, classRegistryControlFlow: FunSpec.Builder, className: ClassName, superClass: String, isTool: Boolean): FunSpec.Builder {
+    override fun provideRegisterClassControlFlow(classWithMembers: ClassWithMembers, classRegistryControlFlow: FunSpec.Builder, className: ClassName, superClass: String, godotBaseClass: String, isTool: Boolean): FunSpec.Builder {
         classRegistryControlFlow.beginControlFlow(
-            "registerClass<%T>(%T::class.qualifiedName!!,·%S,·$isTool)·{",
+            "registerClass<%T>(%T::class.qualifiedName!!,·%S,·$isTool,·%S)·{",
             className,
             className,
-            superClass
+            superClass,
+            godotBaseClass
         )
 
         classWithMembers.classDescriptor.constructors.forEach { classConstructorDescriptor ->

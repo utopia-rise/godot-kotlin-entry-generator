@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 
 class KotlinNativeClassRegistrationGenerator : ClassRegistrationGenerator() {
 
-    override fun provideRegisterClassControlFlow(classWithMembers: ClassWithMembers, classRegistryControlFlow: FunSpec.Builder, className: ClassName, superClass: String, isTool: Boolean): FunSpec.Builder {
+    override fun provideRegisterClassControlFlow(classWithMembers: ClassWithMembers, classRegistryControlFlow: FunSpec.Builder, className: ClassName, superClass: String, godotBaseClass: String, isTool: Boolean): FunSpec.Builder {
         return classRegistryControlFlow.beginControlFlow(
             "registerClass(%S,·%S,·%L,·$isTool)·{",
             classWithMembers.classDescriptor.fqNameSafe.asString(),

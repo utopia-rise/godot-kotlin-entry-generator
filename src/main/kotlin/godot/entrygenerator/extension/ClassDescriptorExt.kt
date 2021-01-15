@@ -1,6 +1,7 @@
 package godot.entrygenerator.extension
 
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.js.descriptorUtils.getJetTypeFqName
 import org.jetbrains.kotlin.types.asSimpleType
 
 fun ClassDescriptor.getSuperTypeNameAsString(): String {
@@ -9,5 +10,5 @@ fun ClassDescriptor.getSuperTypeNameAsString(): String {
         .supertypes
         .first()
         .asSimpleType()
-        .toString()
+        .getJetTypeFqName(false)
 }
