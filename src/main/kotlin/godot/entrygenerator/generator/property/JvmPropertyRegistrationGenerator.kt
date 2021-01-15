@@ -3,14 +3,13 @@ package godot.entrygenerator.generator.property
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FunSpec
-import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.MemberName.Companion.member
 import godot.entrygenerator.EntryGenerationType
-import godot.entrygenerator.extension.*
+import godot.entrygenerator.extension.toParameterKtVariantType
+import godot.entrygenerator.extension.toReturnKtVariantType
 import godot.entrygenerator.generator.property.defaultvalue.DefaultValueExtractorProvider
 import godot.entrygenerator.generator.property.hintstring.PropertyHintStringGeneratorProvider
 import godot.entrygenerator.generator.property.typehint.PropertyTypeHintProvider
-import org.jetbrains.kotlin.backend.common.serialization.findPackage
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.js.descriptorUtils.getJetTypeFqName
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -24,7 +23,7 @@ class JvmPropertyRegistrationGenerator : PropertyRegistrationGenerator() {
         registerClassControlFlow
             .addStatement(
                 "enumFlagProperty(%L,·${defaultValueStringTemplate.replace(" ", "·")})",
-                getPropertyReference(propertyDescriptor),
+                getPropertyReference(propertyDescriptor, className),
                 *defaultValueStringTemplateValues
             )
     }
@@ -41,7 +40,7 @@ class JvmPropertyRegistrationGenerator : PropertyRegistrationGenerator() {
         registerClassControlFlow
             .addStatement(
                 "enumProperty(%L,·${defaultValueStringTemplate.replace(" ", "·")})",
-                getPropertyReference(propertyDescriptor),
+                getPropertyReference(propertyDescriptor, className),
                 *defaultValueStringTemplateValues
             )
     }
@@ -54,7 +53,7 @@ class JvmPropertyRegistrationGenerator : PropertyRegistrationGenerator() {
         registerClassControlFlow
             .addStatement(
                 "property(%L,·%T,·%T,·%S,·%T,·%S,·${defaultValueStringTemplate.replace(" ", "·")})",
-                getPropertyReference(propertyDescriptor),
+                getPropertyReference(propertyDescriptor, className),
                 propertyDescriptor.type.toParameterKtVariantType(),
                 propertyDescriptor.type.toReturnKtVariantType(),
                 propertyDescriptor.type.getJetTypeFqName(false),
@@ -64,15 +63,9 @@ class JvmPropertyRegistrationGenerator : PropertyRegistrationGenerator() {
             )
     }
 
-    private fun getPropertyReference(propertyDescriptor: PropertyDescriptor): CodeBlock {
-        return getContainingClassName(propertyDescriptor)
+    private fun getPropertyReference(propertyDescriptor: PropertyDescriptor, className: ClassName): CodeBlock {
+        return className
             .member(propertyDescriptor.name.asString())
             .reference()
-    }
-
-    private fun getContainingClassName(propertyDescriptor: PropertyDescriptor): ClassName {
-        val classPackage = propertyDescriptor.containingDeclaration.findPackage().fqName.asString()
-        val className = propertyDescriptor.containingDeclaration.name.asString()
-        return ClassName(classPackage, className)
     }
 }

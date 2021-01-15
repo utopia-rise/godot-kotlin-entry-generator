@@ -6,7 +6,10 @@ import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.TypeSpec
 import godot.entrygenerator.extension.getAnnotationValue
 import godot.entrygenerator.extension.getSuperTypeNameAsString
-import godot.entrygenerator.model.*
+import godot.entrygenerator.model.ClassWithMembers
+import godot.entrygenerator.model.REGISTER_CLASS_ANNOTATION
+import godot.entrygenerator.model.REGISTER_CLASS_ANNOTATION_TOOL_ARGUMENT
+import godot.entrygenerator.model.addRegisteredMembersOfSuperclassesForScriptInheritance
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
@@ -33,6 +36,7 @@ abstract class ClassRegistrationGenerator {
 
     abstract fun registerSignals(
         signals: List<PropertyDescriptor>,
+        className: ClassName,
         registerClassControlFlow: FunSpec.Builder
     )
 
@@ -55,11 +59,7 @@ abstract class ClassRegistrationGenerator {
             val className = ClassName(packagePath, classNameAsString)
             val superClass = classWithMembers.classDescriptor.getSuperTypeNameAsString()
 
-            getMembersOfUserDefinedSuperClasses(classWithMembers, classesWithMembers).let { (functions, properties, signals) ->
-                classWithMembers.functions.addAll(functions)
-                classWithMembers.properties.addAll(properties)
-                classWithMembers.signals.addAll(signals)
-            }
+            classWithMembers.addRegisteredMembersOfSuperclassesForScriptInheritance(classesWithMembers)
 
             val registerClassControlFlow = provideRegisterClassControlFlow(
                 classWithMembers,
@@ -80,6 +80,7 @@ abstract class ClassRegistrationGenerator {
 
             registerSignals(
                 classWithMembers.signals,
+                className,
                 registerClassControlFlow
             )
 
@@ -107,35 +108,6 @@ abstract class ClassRegistrationGenerator {
 
             mainEntryRegistryControlFlow
                 .addStatement("%T.register(registry)", ClassName("godot.$packagePath", "${classNameAsString}Registrar"))
-        }
-    }
-
-    data class MemberOfSuperClassesContainer(
-        val functions: MutableList<FunctionDescriptor> = mutableListOf(),
-        val properties: MutableList<PropertyDescriptor> = mutableListOf(),
-        val signals: MutableList<PropertyDescriptor> = mutableListOf()
-    )
-
-    private tailrec fun getMembersOfUserDefinedSuperClasses(
-        classWithMembers: ClassWithMembers,
-        classesWithMembers: Set<ClassWithMembers>,
-        memberOfSuperClassesContainer: MemberOfSuperClassesContainer = MemberOfSuperClassesContainer()
-    ): MemberOfSuperClassesContainer {
-        val superClass = classWithMembers
-            .classDescriptor
-            .getSuperClassNotAny()
-
-        return if (superClass == null || !classesWithMembers.map { it.classDescriptor }.contains(superClass)) {
-            memberOfSuperClassesContainer
-        } else {
-            val superClassWithMembers = classesWithMembers
-                .first { it.classDescriptor == superClass }
-
-            memberOfSuperClassesContainer.functions.addAll(superClassWithMembers.functions)
-            memberOfSuperClassesContainer.properties.addAll(superClassWithMembers.properties)
-            memberOfSuperClassesContainer.signals.addAll(superClassWithMembers.signals)
-
-            getMembersOfUserDefinedSuperClasses(superClassWithMembers, classesWithMembers, memberOfSuperClassesContainer)
         }
     }
 

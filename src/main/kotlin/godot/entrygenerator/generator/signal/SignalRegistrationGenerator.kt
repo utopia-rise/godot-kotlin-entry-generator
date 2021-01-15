@@ -13,15 +13,16 @@ abstract class SignalRegistrationGenerator {
 
     fun registerSignals(
         signals: List<PropertyDescriptor>,
+        className: ClassName,
         registerClassControlFlow: FunSpec.Builder
     ) {
         signals.forEach { propertyDescriptor ->
             signalSanityCheck(propertyDescriptor)
-            registerSignal(propertyDescriptor, registerClassControlFlow)
+            registerSignal(propertyDescriptor, className, registerClassControlFlow)
         }
     }
 
-    abstract fun registerSignal(propertyDescriptor: PropertyDescriptor, registerClassControlFlow: FunSpec.Builder)
+    abstract fun registerSignal(propertyDescriptor: PropertyDescriptor, className: ClassName, registerClassControlFlow: FunSpec.Builder)
 
     private fun signalSanityCheck(propertyDescriptor: PropertyDescriptor) {
         val propertyTypeAsString = propertyDescriptor.type.toString()
