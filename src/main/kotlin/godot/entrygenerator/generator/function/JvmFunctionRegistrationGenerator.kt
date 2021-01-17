@@ -22,7 +22,7 @@ class JvmFunctionRegistrationGenerator : FunctionRegistrationGenerator() {
             "ReturnType cannot be null. Usually this means there was an error in the kotlin compilation. Try a clean build and submit a bug if this does not help"
         }
         return buildList {
-            add(getFunctionReference(functionDescriptor))
+            add(getFunctionReference(functionDescriptor, className))
             add(functionDescriptor.returnType?.toParameterKtVariantType() ?: ClassName("godot.core.VariantType", "NIL"))
 
             if (functionDescriptor.valueParameters.isNotEmpty()) {
@@ -62,15 +62,9 @@ class JvmFunctionRegistrationGenerator : FunctionRegistrationGenerator() {
         }
     }
 
-    private fun getFunctionReference(functionDescriptor: FunctionDescriptor): CodeBlock {
-        return getContainingClassName(functionDescriptor)
+    private fun getFunctionReference(functionDescriptor: FunctionDescriptor, className: ClassName): CodeBlock {
+        return className
             .member(functionDescriptor.name.asString())
             .reference()
-    }
-
-    private fun getContainingClassName(functionDescriptor: FunctionDescriptor): ClassName {
-        val classPackage = functionDescriptor.containingDeclaration.findPackage().fqName.asString()
-        val className = functionDescriptor.containingDeclaration.name.asString()
-        return ClassName(classPackage, className)
     }
 }

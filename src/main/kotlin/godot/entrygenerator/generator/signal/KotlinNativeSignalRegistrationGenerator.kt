@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.source.KotlinSourceElement
 
 class KotlinNativeSignalRegistrationGenerator: SignalRegistrationGenerator() {
-    override fun registerSignal(propertyDescriptor: PropertyDescriptor, registerClassControlFlow: FunSpec.Builder) {
+    override fun registerSignal(propertyDescriptor: PropertyDescriptor, className: ClassName, registerClassControlFlow: FunSpec.Builder) {
         val (signalArgumentsStringTemplate, arrayOfClassNames) = getSignalArguments(propertyDescriptor)
 
         registerClassControlFlow

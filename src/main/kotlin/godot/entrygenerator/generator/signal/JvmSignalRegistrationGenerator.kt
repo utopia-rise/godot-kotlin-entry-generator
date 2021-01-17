@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.types.KotlinType
 
 class JvmSignalRegistrationGenerator : SignalRegistrationGenerator() {
 
-    override fun registerSignal(propertyDescriptor: PropertyDescriptor, registerClassControlFlow: FunSpec.Builder) {
+    override fun registerSignal(propertyDescriptor: PropertyDescriptor, className: ClassName, registerClassControlFlow: FunSpec.Builder) {
         val signalArguments = propertyDescriptor
             .type
             .arguments
@@ -33,7 +33,7 @@ class JvmSignalRegistrationGenerator : SignalRegistrationGenerator() {
         registerClassControlFlow
             .addStatement(
                 getStringTemplate(signalArguments),
-                *getSignalArguments(propertyDescriptor, signalArguments, signalArgumentNamesAsLiteralStrings)
+                *getSignalArguments(propertyDescriptor, className, signalArguments, signalArgumentNamesAsLiteralStrings)
             )
     }
 
@@ -50,9 +50,9 @@ class JvmSignalRegistrationGenerator : SignalRegistrationGenerator() {
         }
     }
 
-    private fun getSignalArguments(propertyDescriptor: PropertyDescriptor, signalArguments: List<KotlinType>, signalArgumentNamesAsLiteralStrings: List<String>): Array<Any> {
+    private fun getSignalArguments(propertyDescriptor: PropertyDescriptor, className: ClassName, signalArguments: List<KotlinType>, signalArgumentNamesAsLiteralStrings: List<String>): Array<Any> {
         return buildList {
-            add(getPropertyReference(propertyDescriptor)) //signalPropertyReference
+            add(getPropertyReference(propertyDescriptor, className)) //signalPropertyReference
 
             //a KtFunctionArgument per signal argument
             signalArguments.forEachIndexed { index, type ->
@@ -64,10 +64,8 @@ class JvmSignalRegistrationGenerator : SignalRegistrationGenerator() {
         }.toTypedArray()
     }
 
-    private fun getPropertyReference(propertyDescriptor: PropertyDescriptor): CodeBlock {
-        val classPackage = propertyDescriptor.containingDeclaration.findPackage().fqName.asString()
-        val className = propertyDescriptor.containingDeclaration.name.asString()
-        return ClassName(classPackage, className)
+    private fun getPropertyReference(propertyDescriptor: PropertyDescriptor, className: ClassName): CodeBlock {
+        return className
             .member(propertyDescriptor.name.asString())
             .reference()
     }

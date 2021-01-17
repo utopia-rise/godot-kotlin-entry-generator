@@ -5,7 +5,6 @@ import com.squareup.kotlinpoet.FunSpec
 import godot.entrygenerator.EntryGenerationType
 import godot.entrygenerator.generator.function.FunctionRegistrationGeneratorProvider
 import godot.entrygenerator.generator.property.PropertyRegistrationGeneratorProvider
-import godot.entrygenerator.generator.signal.KotlinNativeSignalRegistrationGenerator
 import godot.entrygenerator.generator.signal.SignalRegistrationGeneratorProvider
 import godot.entrygenerator.model.ClassWithMembers
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
@@ -15,12 +14,13 @@ import org.jetbrains.kotlin.resolve.BindingContext
 
 class JvmClassRegistrationGenerator : ClassRegistrationGenerator() {
 
-    override fun provideRegisterClassControlFlow(classWithMembers: ClassWithMembers, classRegistryControlFlow: FunSpec.Builder, className: ClassName, superClass: String, isTool: Boolean): FunSpec.Builder {
+    override fun provideRegisterClassControlFlow(classWithMembers: ClassWithMembers, classRegistryControlFlow: FunSpec.Builder, className: ClassName, superClass: String, godotBaseClass: String, isTool: Boolean): FunSpec.Builder {
         classRegistryControlFlow.beginControlFlow(
-            "registerClass<%T>(%T::class.qualifiedName!!,·%S,·$isTool)·{",
+            "registerClass<%T>(%T::class.qualifiedName!!,·%S,·$isTool,·%S)·{",
             className,
             className,
-            superClass
+            superClass,
+            godotBaseClass
         )
 
         classWithMembers.classDescriptor.constructors.forEach { classConstructorDescriptor ->
@@ -52,10 +52,10 @@ class JvmClassRegistrationGenerator : ClassRegistrationGenerator() {
             .registerFunctions(functions, registerClassControlFlow, className)
     }
 
-    override fun registerSignals(signals: List<PropertyDescriptor>, registerClassControlFlow: FunSpec.Builder) {
+    override fun registerSignals(signals: List<PropertyDescriptor>, className: ClassName, registerClassControlFlow: FunSpec.Builder) {
         SignalRegistrationGeneratorProvider
             .provide(EntryGenerationType.JVM)
-            .registerSignals(signals, registerClassControlFlow)
+            .registerSignals(signals, className, registerClassControlFlow)
     }
 
     override fun registerProperties(properties: List<PropertyDescriptor>, registerClassControlFlow: FunSpec.Builder, className: ClassName, bindingContext: BindingContext) {
