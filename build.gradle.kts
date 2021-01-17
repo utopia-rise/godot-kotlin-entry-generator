@@ -16,7 +16,7 @@ repositories {
 
 dependencies {
     implementation(kotlin("stdlib"))
-    compileOnly(kotlin("compiler-embeddable"))
+    implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:1.4.10")
     implementation("com.squareup:kotlinpoet:${DependenciesVersions.kotlinPoetVersion}")
 }
 

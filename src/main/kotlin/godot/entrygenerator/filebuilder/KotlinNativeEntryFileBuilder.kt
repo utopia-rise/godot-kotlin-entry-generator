@@ -33,7 +33,7 @@ class KotlinNativeEntryFileBuilder(bindingContext: BindingContext): EntryFileBui
         .addParameter("handle", ClassName("kotlinx.cinterop", "COpaquePointer"))
         .addStatement("%T.nativescriptInit(handle)", ClassName("godot.core", "Godot"))
 
-    override fun registerClassesWithMembers(classesWithMembers: Set<ClassWithMembers>): EntryFileBuilder {
+    override fun registerClassesWithMembers(classesWithMembers: Set<ClassWithMembers>, outputPath: String): EntryFileBuilder {
         val classRegistryControlFlow = nativeScriptInitFunctionSpec
             .beginControlFlow(
                 "with(%T(handle))·{",
@@ -42,7 +42,7 @@ class KotlinNativeEntryFileBuilder(bindingContext: BindingContext): EntryFileBui
 
         ClassRegistrationGeneratorProvider
             .provideClassRegistrationProvider(EntryGenerationType.KOTLIN_NATIVE)
-            .registerClasses(classesWithMembers, classRegistryControlFlow, bindingContext)
+            .registerClasses(classesWithMembers, classRegistryControlFlow, bindingContext, outputPath)
 
         classRegistryControlFlow.endControlFlow() //END: with ClassRegistry
         return this
