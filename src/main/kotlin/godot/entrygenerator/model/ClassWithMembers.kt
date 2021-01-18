@@ -5,12 +5,9 @@ import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperClassNotAny
 import org.jetbrains.kotlin.resolve.lazy.descriptors.LazyClassDescriptor
-import org.jetbrains.kotlin.resolve.scopes.MemberScope
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedClassDescriptor
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedMemberScope
-import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedPropertyDescriptor
 import org.jetbrains.kotlin.types.TypeSubstitution
-import java.io.File
 
 data class ClassWithMembers(
     val classDescriptor: ClassDescriptor,
@@ -31,32 +28,34 @@ data class RegisteredProperty(
  * As the inheritance in Godot script classes is faked, we need to register ALL members
  * of the whole user defined script class hierarchy for the child class so Godot knows these members exist for a given script
  */
-fun ClassWithMembers.addRegisteredMembersOfSuperclassesForScriptInheritance(
-    classesWithMembers: Set<ClassWithMembers>
-) {
-    classDescriptor.getMembersOfUserDefinedSuperClasses(classesWithMembers)
+fun ClassWithMembers.gatherAllMembersOfClassHierarchyForRegistration() {
+    classDescriptor.getMembersOfUserDefinedSuperClasses()
         .let { (functionsFromSuperclasses, propertiesFromSuperclasses, signalsFromSuperclasses) ->
             functions.addAll(getOnlyFunctionsNotAlreadyPresentAndAnnotatedInThisClass(functionsFromSuperclasses))
             signals.addAll(getOnlySignalsNotAlreadyPresentAndAnnotatedInThisClass(signalsFromSuperclasses))
-
-            val overriddenProperties = properties
-                .filter { registeredProperty -> registeredProperty.propertyDescriptor.overriddenDescriptors.isNotEmpty() }
-
-            properties.removeAll(overriddenProperties)
-            properties.addAll(overriddenProperties.map { it.copy(isOverriding = true) })
-
-            properties.addAll(
-                getOnlyPropertiesNotAlreadyPresentAndAnnotatedInThisClass(propertiesFromSuperclasses)
-                    .map { propertyDescriptor ->
-                        RegisteredProperty(
-                            propertyDescriptor,
-                            isInherited = true
-                        )
-                    }
-            )
-
-            propertiesFromSuperclasses
+            markOverriddenProperties()
+            addInheritedButNotOverriddenProperties(propertiesFromSuperclasses)
         }
+}
+
+private fun ClassWithMembers.addInheritedButNotOverriddenProperties(propertiesFromSuperclasses: MutableList<PropertyDescriptor>) {
+    properties.addAll(
+        getOnlyPropertiesNotAlreadyPresentAndAnnotatedInThisClass(propertiesFromSuperclasses)
+            .map { propertyDescriptor ->
+                RegisteredProperty(
+                    propertyDescriptor,
+                    isInherited = true
+                )
+            }
+    )
+}
+
+private fun ClassWithMembers.markOverriddenProperties() {
+    val overriddenProperties = properties
+        .filter { registeredProperty -> registeredProperty.propertyDescriptor.overriddenDescriptors.isNotEmpty() }
+
+    properties.removeAll(overriddenProperties)
+    properties.addAll(overriddenProperties.map { it.copy(isOverriding = true) })
 }
 
 /**
@@ -154,7 +153,6 @@ private fun ClassWithMembers.addOverriddenNotAnnotatedPropertyDescriptor(
  * @return all registered members of user defined super classes
  */
 private tailrec fun ClassDescriptor.getMembersOfUserDefinedSuperClasses(
-    classesWithMembers: Set<ClassWithMembers>,
     memberOfSuperClassesContainer: MemberOfSuperClassesContainer = MemberOfSuperClassesContainer()
 ): MemberOfSuperClassesContainer {
     val superClass = getSuperClassNotAny()
@@ -262,6 +260,6 @@ private tailrec fun ClassDescriptor.getMembersOfUserDefinedSuperClasses(
             else -> throw IllegalArgumentException("Cannot handle ClassDescriptor type of $superClass")
         }
 
-        superClass.getMembersOfUserDefinedSuperClasses(classesWithMembers, memberOfSuperClassesContainer)
+        superClass.getMembersOfUserDefinedSuperClasses(memberOfSuperClassesContainer)
     }
 }

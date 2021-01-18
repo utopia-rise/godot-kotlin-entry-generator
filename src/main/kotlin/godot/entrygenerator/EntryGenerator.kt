@@ -22,7 +22,7 @@ object EntryGenerator {
      * Only needed on the JVM to get propertyPsiAssignments on not recompiled compiled parent classes on
      * incremental builds
      */
-    var psiClassesToProperties: List<Pair<KtClass, List<KtProperty>>> = listOf()
+    var psiClassesWithMembers: List<PsiClassWithMembers> = listOf()
 
     fun generateEntryFiles(
         generationType: EntryGenerationType,
@@ -58,6 +58,13 @@ object EntryGenerator {
 
     fun generateServiceFile(serviceFileDir: String) = ServiceGenerator.generateServiceFile(serviceFileDir)
 
+    /**
+     * To be called from gradle plugin
+     *
+     * Deletes old entry files and regenerated the main entry file with calls to all existing and new class specific entry files.
+     *
+     * Needed for incremental compilation
+     */
     fun deleteOldEntryFilesAndReGenerateMainEntryFile(sourceDirs: List<String>, outputPath: String) {
         val userClassesFqNames = CompilerEnvironmentProvider
             .provide(sourceDirs)

@@ -28,25 +28,27 @@ fun PropertyDescriptor.getPropertyHintAnnotation(): AnnotationDescriptor? {
 }
 
 val PropertyDescriptor.assignmentPsi: KtExpression
-    get() {
-        return if (this is DeserializedPropertyDescriptor) { //incremental compilation
+    get() = if (this is DeserializedPropertyDescriptor) { //incremental compilation
+        requireNotNull(
             EntryGenerator
-                .psiClassesToProperties
-                .first { it.first.fqName?.asString() == containingDeclaration.fqNameSafe.asString() }
-                .second
-                .first { it.name == this.name.asString() }
-                .let { ktProperty ->
+                .psiClassesWithMembers
+                .firstOrNull { psiClassWithMembers -> psiClassWithMembers.ktClass.fqName?.asString() == containingDeclaration.fqNameSafe.asString() }
+                ?.properties
+                ?.firstOrNull { ktProperty -> ktProperty.name == this.name.asString() }
+                ?.let { ktProperty ->
                     ktProperty
                         .initializer
                         ?: ktProperty.delegateExpression
 
-                }!! // should not be null
-        } else {
+                }
+        ) { "Property assignment of property $fqNameSafe cannot be null" }
+    } else {
+        requireNotNull(
             ((this
                 .source as KotlinSourceElement)
                 .psi as KtProperty)
-                .delegateExpressionOrInitializer!! // should not be null
-        }
+                .delegateExpressionOrInitializer
+        ) { "Property assignment of property $fqNameSafe cannot be null" }
     }
 
 

@@ -69,6 +69,6 @@ class JvmClassRegistrationGenerator : ClassRegistrationGenerator() {
     ) {
         PropertyRegistrationGeneratorProvider
             .provide(EntryGenerationType.JVM)
-            .registerProperties(registeredProperties, classSpecificRegistryBuilder, registerClassControlFlow, className, bindingContext, EntryGenerationType.JVM)
+            .registerProperties(registeredProperties, classSpecificRegistryBuilder, registerClassControlFlow, className, bindingContext)
     }
 }

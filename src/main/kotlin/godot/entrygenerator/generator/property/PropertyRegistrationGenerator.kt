@@ -24,8 +24,7 @@ abstract class PropertyRegistrationGenerator {
         classSpecificRegistryBuilder: TypeSpec.Builder,
         registerClassControlFlow: FunSpec.Builder,
         className: ClassName,
-        bindingContext: BindingContext,
-        entryGenerationType: EntryGenerationType
+        bindingContext: BindingContext
     ) {
         registeredProperties
             .forEach { registeredProperty ->
