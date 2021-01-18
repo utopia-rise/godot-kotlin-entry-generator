@@ -6,16 +6,23 @@ import godot.entrygenerator.filebuilder.EntryFileBuilderProvider
 import godot.entrygenerator.generator.GdnsGenerator
 import godot.entrygenerator.generator.ServiceGenerator
 import godot.entrygenerator.model.ClassWithMembers
+import godot.entrygenerator.model.PsiClassWithMembers
 import godot.entrygenerator.transformer.transformTypeDeclarationsToClassWithMembers
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import java.io.File
 
 object EntryGenerator {
+    /**
+     * Only needed on the JVM to get propertyPsiAssignments on not recompiled compiled parent classes on
+     * incremental builds
+     */
+    var psiClassesToProperties: List<Pair<KtClass, List<KtProperty>>> = listOf()
 
     fun generateEntryFiles(
         generationType: EntryGenerationType,

@@ -5,6 +5,12 @@ import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperClassNotAny
 import org.jetbrains.kotlin.resolve.lazy.descriptors.LazyClassDescriptor
+import org.jetbrains.kotlin.resolve.scopes.MemberScope
+import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedClassDescriptor
+import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedMemberScope
+import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedPropertyDescriptor
+import org.jetbrains.kotlin.types.TypeSubstitution
+import java.io.File
 
 data class ClassWithMembers(
     val classDescriptor: ClassDescriptor,
@@ -19,8 +25,10 @@ data class ClassWithMembers(
  * As the inheritance in Godot script classes is faked, we need to register ALL members
  * of the whole user defined script class hierarchy for the child class so Godot knows these members exist for a given script
  */
-fun ClassWithMembers.addRegisteredMembersOfSuperclassesForScriptInheritance(classesWithMembers: Set<ClassWithMembers>) {
-    getMembersOfUserDefinedSuperClasses(classesWithMembers)
+fun ClassWithMembers.addRegisteredMembersOfSuperclassesForScriptInheritance(
+    classesWithMembers: Set<ClassWithMembers>
+) {
+    classDescriptor.getMembersOfUserDefinedSuperClasses(classesWithMembers)
         .let { (functionsFromSuperclasses, propertiesFromSuperclasses, signalsFromSuperclasses) ->
             functions.addAll(getOnlyFunctionsNotAlreadyPresentAndAnnotatedInThisClass(functionsFromSuperclasses))
             properties.addAll(getOnlyPropertiesNotAlreadyPresentAndAnnotatedInThisClass(propertiesFromSuperclasses))
@@ -55,7 +63,11 @@ private fun ClassWithMembers.getOnlyPropertiesNotAlreadyPresentAndAnnotatedInThi
                         property.returnType == propertyFromSuperClass.returnType
                 }
         }
-        .filter { superClassPropertyDescriptor -> !addOverriddenNotAnnotatedPropertyDescriptor(superClassPropertyDescriptor) }
+        .filter { superClassPropertyDescriptor ->
+            !addOverriddenNotAnnotatedPropertyDescriptor(
+                superClassPropertyDescriptor
+            )
+        }
 
 /**
  * Filters the functions found in superclasses to only get the not overridden and not explicitly annotated ones
@@ -112,23 +124,115 @@ private fun ClassWithMembers.addOverriddenNotAnnotatedPropertyDescriptor(
  * Needed for script inheritance as all parent members need to be registered in the child context as well, overridden or not.
  * @return all registered members of user defined super classes
  */
-private tailrec fun ClassWithMembers.getMembersOfUserDefinedSuperClasses(
+private tailrec fun ClassDescriptor.getMembersOfUserDefinedSuperClasses(
     classesWithMembers: Set<ClassWithMembers>,
     memberOfSuperClassesContainer: MemberOfSuperClassesContainer = MemberOfSuperClassesContainer()
 ): MemberOfSuperClassesContainer {
-    val superClass = classDescriptor
-        .getSuperClassNotAny()
+    val superClass = getSuperClassNotAny()
 
-    return if (superClass == null || !classesWithMembers.map { it.classDescriptor }.contains(superClass)) {
-        memberOfSuperClassesContainer //no further user defined superclasses found. Returning all found members
+    return if (superClass == null || superClass.annotations.mapNotNull { it.fqName?.asString() }
+            .contains(GODOT_BASE_TYPE_ANNOTATION)) {
+        memberOfSuperClassesContainer //no further user or library defined superclasses found. Returning all found members
     } else {
-        val superClassWithMembers = classesWithMembers
-            .first { it.classDescriptor == superClass }
+        when (superClass) {
+            is DeserializedClassDescriptor -> {
+                (superClass
+                    .getMemberScope(TypeSubstitution.EMPTY)
+                    as DeserializedMemberScope)
+                    .getContributedDescriptors()
+                    .forEach { declarationDescriptor ->
+                        when (declarationDescriptor) {
+                            is PropertyDescriptor -> {
+                                val isRegisteredProperty = declarationDescriptor
+                                    .annotations
+                                    .map { annotation ->
+                                        annotation
+                                            .fqName
+                                            ?.asString()
+                                    }
+                                    .contains(REGISTER_PROPERTY_ANNOTATION)
 
-        memberOfSuperClassesContainer.functions.addAll(superClassWithMembers.functions)
-        memberOfSuperClassesContainer.properties.addAll(superClassWithMembers.properties)
-        memberOfSuperClassesContainer.signals.addAll(superClassWithMembers.signals)
+                                val isRegisteredSignal = declarationDescriptor
+                                    .annotations
+                                    .map { annotation ->
+                                        annotation
+                                            .fqName
+                                            ?.asString()
+                                    }
+                                    .contains(REGISTER_SIGNAL_ANNOTATION)
 
-        superClassWithMembers.getMembersOfUserDefinedSuperClasses(classesWithMembers, memberOfSuperClassesContainer)
+                                if (isRegisteredProperty) {
+                                    memberOfSuperClassesContainer.properties.add(declarationDescriptor)
+                                }
+                                if (isRegisteredSignal) {
+                                    memberOfSuperClassesContainer.signals.add(declarationDescriptor)
+                                }
+                            }
+                            is FunctionDescriptor -> {
+                                val isRegistered = declarationDescriptor
+                                    .annotations
+                                    .map { annotation ->
+                                        annotation
+                                            .fqName
+                                            ?.asString()
+                                    }
+                                    .contains(REGISTER_FUNCTION_ANNOTATION)
+                                if (isRegistered) {
+                                    memberOfSuperClassesContainer.functions.add(declarationDescriptor)
+                                }
+                            }
+                        }
+                    }
+            }
+            is LazyClassDescriptor -> {
+                val members = superClass.declaredCallableMembers
+
+                val functions = members
+                    .filterIsInstance<FunctionDescriptor>()
+                    .filter { functionDescriptor ->
+                        functionDescriptor
+                            .annotations
+                            .map { annotation ->
+                                annotation
+                                    .fqName
+                                    ?.asString()
+                            }
+                            .contains(REGISTER_FUNCTION_ANNOTATION)
+                    }
+
+                val properties = members
+                    .filterIsInstance<PropertyDescriptor>()
+                    .filter { propertyDescriptor ->
+                        propertyDescriptor
+                            .annotations
+                            .map { annotation ->
+                                annotation
+                                    .fqName
+                                    ?.asString()
+                            }
+                            .contains(REGISTER_PROPERTY_ANNOTATION)
+                    }
+
+                val signals = members
+                    .filterIsInstance<PropertyDescriptor>()
+                    .filter { propertyDescriptor ->
+                        propertyDescriptor
+                            .annotations
+                            .map { annotation ->
+                                annotation
+                                    .fqName
+                                    ?.asString()
+                            }
+                            .contains(REGISTER_SIGNAL_ANNOTATION)
+                    }
+
+                memberOfSuperClassesContainer.functions.addAll(functions)
+                memberOfSuperClassesContainer.properties.addAll(properties)
+                memberOfSuperClassesContainer.signals.addAll(signals)
+            }
+            else -> throw IllegalArgumentException("Cannot handle ClassDescriptor type of $superClass")
+        }
+
+        superClass.getMembersOfUserDefinedSuperClasses(classesWithMembers, memberOfSuperClassesContainer)
     }
 }

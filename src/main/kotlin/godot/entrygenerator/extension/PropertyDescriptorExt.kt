@@ -1,11 +1,14 @@
 package godot.entrygenerator.extension
 
+import godot.entrygenerator.EntryGenerator
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.source.KotlinSourceElement
+import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedPropertyDescriptor
 
 fun PropertyDescriptor.getPropertyHintAnnotation(): AnnotationDescriptor? {
     val propertyHintAnnotations = propertyHintAnnotations
@@ -25,10 +28,21 @@ fun PropertyDescriptor.getPropertyHintAnnotation(): AnnotationDescriptor? {
 }
 
 val PropertyDescriptor.assignmentPsi: KtExpression
-    get() = ((this
-        .source as KotlinSourceElement)
-        .psi as KtProperty)
-        .delegateExpressionOrInitializer!! // should not be null
+    get() {
+        return if (this is DeserializedPropertyDescriptor) { //incremental compilation
+            EntryGenerator
+                .psiClassesToProperties
+                .first { it.first.fqName?.asString() == containingDeclaration.fqNameSafe.asString() }
+                .second
+                .first { it.name == this.name.asString() }
+                .initializer!! // should not be null
+        } else {
+            ((this
+                .source as KotlinSourceElement)
+                .psi as KtProperty)
+                .delegateExpressionOrInitializer!! // should not be null
+        }
+    }
 
 
 private val propertyHintAnnotations: List<String> =

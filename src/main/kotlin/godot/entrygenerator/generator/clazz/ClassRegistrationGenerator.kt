@@ -6,16 +6,12 @@ import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.TypeSpec
 import godot.entrygenerator.extension.getAnnotationValue
 import godot.entrygenerator.extension.getSuperTypeNameAsString
-import godot.entrygenerator.model.ClassWithMembers
-import godot.entrygenerator.model.REGISTER_CLASS_ANNOTATION
-import godot.entrygenerator.model.REGISTER_CLASS_ANNOTATION_TOOL_ARGUMENT
-import godot.entrygenerator.model.addRegisteredMembersOfSuperclassesForScriptInheritance
+import godot.entrygenerator.model.*
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
-import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperClassNotAny
 import java.io.File
 import org.jetbrains.kotlin.resolve.descriptorUtil.getAllSuperclassesWithoutAny
 
@@ -64,9 +60,10 @@ abstract class ClassRegistrationGenerator {
                 .classDescriptor
                 .getAllSuperclassesWithoutAny()
                 .first { superClassDescriptor ->
-                    !classesWithMembers
-                        .map { it.classDescriptor }
-                        .contains(superClassDescriptor)
+                    superClassDescriptor
+                        .annotations
+                        .mapNotNull { it.fqName?.asString() }
+                        .contains(GODOT_BASE_TYPE_ANNOTATION)
                 }
                 .fqNameSafe
                 .asString()
