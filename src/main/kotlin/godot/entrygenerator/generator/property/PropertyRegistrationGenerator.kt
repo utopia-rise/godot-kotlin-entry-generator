@@ -2,14 +2,11 @@ package godot.entrygenerator.generator.property
 
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FunSpec
+import com.squareup.kotlinpoet.TypeSpec
 import godot.entrygenerator.EntryGenerationType
 import godot.entrygenerator.extension.getAnnotationValue
 import godot.entrygenerator.extension.isCompatibleList
-import godot.entrygenerator.extension.isReference
-import godot.entrygenerator.model.REGISTER_PROPERTY_ANNOTATION
-import godot.entrygenerator.model.REGISTER_PROPERTY_ANNOTATION_RPC_MODE_ARGUMENT
-import godot.entrygenerator.model.REGISTER_PROPERTY_ANNOTATION_VISIBLE_IN_EDITOR_ARGUMENT
-import org.jetbrains.kotlin.builtins.KotlinBuiltIns
+import godot.entrygenerator.model.*
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.js.descriptorUtils.getJetTypeFqName
 import org.jetbrains.kotlin.name.ClassId
@@ -23,48 +20,57 @@ import org.jetbrains.kotlin.types.typeUtil.supertypes
 abstract class PropertyRegistrationGenerator {
 
     fun registerProperties(
-        properties: List<PropertyDescriptor>,
+        registeredProperties: MutableList<RegisteredProperty>,
+        classSpecificRegistryBuilder: TypeSpec.Builder,
         registerClassControlFlow: FunSpec.Builder,
         className: ClassName,
         bindingContext: BindingContext,
         entryGenerationType: EntryGenerationType
     ) {
-        properties.forEach { propertyDescriptor ->
-            when {
-                propertyDescriptor.type.isEnum() -> registerEnum(className, propertyDescriptor, bindingContext, registerClassControlFlow)
-                propertyDescriptor.type.isCompatibleList() && propertyDescriptor.type.arguments.firstOrNull()?.type?.isEnum() == true -> registerEnumList(className, propertyDescriptor, bindingContext, registerClassControlFlow)
-                propertyDescriptor.type.getJetTypeFqName(false).matches(Regex("^kotlin\\.collections\\..*Set\$"))
-                && propertyDescriptor.type.arguments.firstOrNull()?.type?.isEnum() == true -> registerEnumFlag(className, propertyDescriptor, bindingContext, registerClassControlFlow)
-                else -> registerProperty(className, propertyDescriptor, bindingContext, registerClassControlFlow)
+        registeredProperties
+            .forEach { registeredProperty ->
+                when {
+                    registeredProperty.propertyDescriptor.type.isEnum() -> registerEnum(className, registeredProperty, bindingContext, registerClassControlFlow)
+                    registeredProperty.propertyDescriptor.type.isCompatibleList() && registeredProperty.propertyDescriptor.type.arguments.firstOrNull()?.type?.isEnum() == true -> registerEnumList(
+                        className,
+                        registeredProperty,
+                        bindingContext,
+                        registerClassControlFlow
+                    )
+                    registeredProperty.propertyDescriptor.type.getJetTypeFqName(false).matches(Regex("^kotlin\\.collections\\..*Set\$"))
+                        && registeredProperty.propertyDescriptor.type.arguments.firstOrNull()?.type?.isEnum() == true -> registerEnumFlag(className, registeredProperty, bindingContext, classSpecificRegistryBuilder, registerClassControlFlow)
+                    else -> registerProperty(className, registeredProperty, bindingContext, classSpecificRegistryBuilder, registerClassControlFlow)
+                }
             }
-        }
     }
 
     protected abstract fun registerEnumFlag(
         className: ClassName,
-        propertyDescriptor: PropertyDescriptor,
+        registeredProperty: RegisteredProperty,
         bindingContext: BindingContext,
+        classSpecificRegistryBuilder: TypeSpec.Builder,
         registerClassControlFlow: FunSpec.Builder
     )
 
     protected abstract fun registerEnumList(
         className: ClassName,
-        propertyDescriptor: PropertyDescriptor,
+        registeredProperty: RegisteredProperty,
         bindingContext: BindingContext,
         registerClassControlFlow: FunSpec.Builder
     )
 
     protected abstract fun registerEnum(
         className: ClassName,
-        propertyDescriptor: PropertyDescriptor,
+        registeredProperty: RegisteredProperty,
         bindingContext: BindingContext,
         registerClassControlFlow: FunSpec.Builder
     )
 
     protected abstract fun registerProperty(
         className: ClassName,
-        propertyDescriptor: PropertyDescriptor,
+        registeredProperty: RegisteredProperty,
         bindingContext: BindingContext,
+        classSpecificRegistryBuilder: TypeSpec.Builder,
         registerClassControlFlow: FunSpec.Builder
     )
 

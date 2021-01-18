@@ -3,6 +3,7 @@ package godot.entrygenerator.generator.property
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.MemberName.Companion.member
+import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.asTypeName
 import godot.entrygenerator.EntryGenerationType
 import godot.entrygenerator.extension.getFirstRegistrableTypeAsFqNameStringOrNull
@@ -11,6 +12,7 @@ import godot.entrygenerator.generator.property.hintstring.PropertyHintStringGene
 import godot.entrygenerator.generator.property.typehint.PropertyTypeHintProvider
 import godot.entrygenerator.mapper.RpcModeAnnotationMapper
 import godot.entrygenerator.mapper.TypeToVariantAsClassNameMapper
+import godot.entrygenerator.model.RegisteredProperty
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -19,76 +21,88 @@ import org.jetbrains.kotlin.types.typeUtil.isEnum
 
 class KotlinNativePropertyRegistrationGenerator : PropertyRegistrationGenerator() {
 
-    override fun registerEnumFlag(className: ClassName, propertyDescriptor: PropertyDescriptor, bindingContext: BindingContext, registerClassControlFlow: FunSpec.Builder) {
+    override fun registerEnumFlag(
+        className: ClassName,
+        registeredProperty: RegisteredProperty,
+        bindingContext: BindingContext,
+        classSpecificRegistryBuilder: TypeSpec.Builder,
+        registerClassControlFlow: FunSpec.Builder
+    ) {
         val (defaultValueStringTemplate, defaultValueStringTemplateValues) = DefaultValueExtractorProvider
-            .provide(propertyDescriptor, bindingContext, EntryGenerationType.KOTLIN_NATIVE)
+            .provide(registeredProperty.propertyDescriptor, bindingContext, EntryGenerationType.KOTLIN_NATIVE)
             .getDefaultValue(ClassName("godot.core", "Variant"))
 
         registerClassControlFlow.addStatement(
             "enumFlagProperty(%S,·%L,·${defaultValueStringTemplate.replace(" ", "·")},·%L,·%T)",
-            propertyDescriptor.name,
-            className.member(propertyDescriptor.name.asString()).reference(),
+            registeredProperty.propertyDescriptor.name,
+            className.member(registeredProperty.propertyDescriptor.name.asString()).reference(),
             *defaultValueStringTemplateValues,
-            shouldBeVisibleInEditor(propertyDescriptor),
-            RpcModeAnnotationMapper.mapRpcModeAnnotationToClassName(getRpcModeEnum(propertyDescriptor))
+            shouldBeVisibleInEditor(registeredProperty.propertyDescriptor),
+            RpcModeAnnotationMapper.mapRpcModeAnnotationToClassName(getRpcModeEnum(registeredProperty.propertyDescriptor))
         )
     }
 
-    override fun registerEnumList(className: ClassName, propertyDescriptor: PropertyDescriptor, bindingContext: BindingContext, registerClassControlFlow: FunSpec.Builder) {
+    override fun registerEnumList(className: ClassName, registeredProperty: RegisteredProperty, bindingContext: BindingContext, registerClassControlFlow: FunSpec.Builder) {
         val (defaultValueStringTemplate, defaultValueStringTemplateValues) = DefaultValueExtractorProvider
-            .provide(propertyDescriptor, bindingContext, EntryGenerationType.KOTLIN_NATIVE)
+            .provide(registeredProperty.propertyDescriptor, bindingContext, EntryGenerationType.KOTLIN_NATIVE)
             .getDefaultValue(ClassName("godot.core", "Variant"))
 
         registerClassControlFlow.addStatement(
             "enumListProperty(%S,·%L,·${defaultValueStringTemplate.replace(" ", "·")},·%L,·%T)",
-            propertyDescriptor.name,
-            className.member(propertyDescriptor.name.asString()).reference(),
+            registeredProperty.propertyDescriptor.name,
+            className.member(registeredProperty.propertyDescriptor.name.asString()).reference(),
             *defaultValueStringTemplateValues,
-            shouldBeVisibleInEditor(propertyDescriptor),
-            RpcModeAnnotationMapper.mapRpcModeAnnotationToClassName(getRpcModeEnum(propertyDescriptor))
+            shouldBeVisibleInEditor(registeredProperty.propertyDescriptor),
+            RpcModeAnnotationMapper.mapRpcModeAnnotationToClassName(getRpcModeEnum(registeredProperty.propertyDescriptor))
         )
     }
 
-    override fun registerEnum(className: ClassName, propertyDescriptor: PropertyDescriptor, bindingContext: BindingContext, registerClassControlFlow: FunSpec.Builder) {
+    override fun registerEnum(className: ClassName, registeredProperty: RegisteredProperty, bindingContext: BindingContext, registerClassControlFlow: FunSpec.Builder) {
         val (defaultValueStringTemplate, defaultValueStringTemplateValues) = DefaultValueExtractorProvider
-            .provide(propertyDescriptor, bindingContext, EntryGenerationType.KOTLIN_NATIVE)
+            .provide(registeredProperty.propertyDescriptor, bindingContext, EntryGenerationType.KOTLIN_NATIVE)
             .getDefaultValue(ClassName("godot.core", "Variant"))
 
         registerClassControlFlow
             .addStatement(
                 "enumProperty(%S,·%L,·${defaultValueStringTemplate.replace(" ", "·")},·%L,·%T)",
-                propertyDescriptor.name,
-                className.member(propertyDescriptor.name.asString()).reference(),
+                registeredProperty.propertyDescriptor.name,
+                className.member(registeredProperty.propertyDescriptor.name.asString()).reference(),
                 *defaultValueStringTemplateValues,
-                shouldBeVisibleInEditor(propertyDescriptor),
-                RpcModeAnnotationMapper.mapRpcModeAnnotationToClassName(getRpcModeEnum(propertyDescriptor))
+                shouldBeVisibleInEditor(registeredProperty.propertyDescriptor),
+                RpcModeAnnotationMapper.mapRpcModeAnnotationToClassName(getRpcModeEnum(registeredProperty.propertyDescriptor))
             )
     }
 
-    override fun registerProperty(className: ClassName, propertyDescriptor: PropertyDescriptor, bindingContext: BindingContext, registerClassControlFlow: FunSpec.Builder) {
+    override fun registerProperty(
+        className: ClassName,
+        registeredProperty: RegisteredProperty,
+        bindingContext: BindingContext,
+        classSpecificRegistryBuilder: TypeSpec.Builder,
+        registerClassControlFlow: FunSpec.Builder
+    ) {
         val (defaultValueStringTemplate, defaultValueStringTemplateValues) = DefaultValueExtractorProvider
-            .provide(propertyDescriptor, bindingContext, EntryGenerationType.KOTLIN_NATIVE)
+            .provide(registeredProperty.propertyDescriptor, bindingContext, EntryGenerationType.KOTLIN_NATIVE)
             .getDefaultValue(ClassName("godot.core", "Variant"))
-        val (variantToTypeTemplate, variantToTypeTemplateValue) = getVariantToTypeConverter(propertyDescriptor)
-        val (typeToVariantTemplate, typeToVariantTemplateValue) = getTypeToVariantConverter(propertyDescriptor)
-        val hintString = PropertyHintStringGeneratorProvider.provide(propertyDescriptor, bindingContext, EntryGenerationType.KOTLIN_NATIVE).getHintString()
+        val (variantToTypeTemplate, variantToTypeTemplateValue) = getVariantToTypeConverter(registeredProperty.propertyDescriptor)
+        val (typeToVariantTemplate, typeToVariantTemplateValue) = getTypeToVariantConverter(registeredProperty.propertyDescriptor)
+        val hintString = PropertyHintStringGeneratorProvider.provide(registeredProperty.propertyDescriptor, bindingContext, EntryGenerationType.KOTLIN_NATIVE).getHintString()
 
         registerClassControlFlow
             .addStatement(
                 "property(%S,·%L,·$typeToVariantTemplate,·$variantToTypeTemplate,·%T,·${defaultValueStringTemplate.replace(" ", "·")},·%L,·%T,·%T,·%S)",
-                propertyDescriptor.name,
-                className.member(propertyDescriptor.name.asString()).reference(),
+                registeredProperty.propertyDescriptor.name,
+                className.member(registeredProperty.propertyDescriptor.name.asString()).reference(),
                 typeToVariantTemplateValue,
                 variantToTypeTemplateValue,
                 TypeToVariantAsClassNameMapper.mapTypeToVariantAsClassName(
-                    propertyDescriptor.type.toString(),
-                    propertyDescriptor.type,
-                    propertyDescriptor.type.isEnum()
+                    registeredProperty.propertyDescriptor.type.toString(),
+                    registeredProperty.propertyDescriptor.type,
+                    registeredProperty.propertyDescriptor.type.isEnum()
                 ), //property variant type
                 *defaultValueStringTemplateValues,
-                shouldBeVisibleInEditor(propertyDescriptor),
-                RpcModeAnnotationMapper.mapRpcModeAnnotationToClassName(getRpcModeEnum(propertyDescriptor)),
-                PropertyTypeHintProvider.provide(propertyDescriptor, EntryGenerationType.KOTLIN_NATIVE),
+                shouldBeVisibleInEditor(registeredProperty.propertyDescriptor),
+                RpcModeAnnotationMapper.mapRpcModeAnnotationToClassName(getRpcModeEnum(registeredProperty.propertyDescriptor)),
+                PropertyTypeHintProvider.provide(registeredProperty.propertyDescriptor, EntryGenerationType.KOTLIN_NATIVE),
                 hintString
             )
     }

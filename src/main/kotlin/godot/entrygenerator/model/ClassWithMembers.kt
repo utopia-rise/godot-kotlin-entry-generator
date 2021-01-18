@@ -16,7 +16,13 @@ data class ClassWithMembers(
     val classDescriptor: ClassDescriptor,
     val functions: MutableList<FunctionDescriptor> = mutableListOf(),
     val signals: MutableList<PropertyDescriptor> = mutableListOf(),
-    val properties: MutableList<PropertyDescriptor> = mutableListOf()
+    val properties: MutableList<RegisteredProperty> = mutableListOf()
+)
+
+data class RegisteredProperty(
+    val propertyDescriptor: PropertyDescriptor,
+    val isOverriding: Boolean = false,
+    val isInherited: Boolean = false
 )
 
 /**
@@ -31,8 +37,25 @@ fun ClassWithMembers.addRegisteredMembersOfSuperclassesForScriptInheritance(
     classDescriptor.getMembersOfUserDefinedSuperClasses(classesWithMembers)
         .let { (functionsFromSuperclasses, propertiesFromSuperclasses, signalsFromSuperclasses) ->
             functions.addAll(getOnlyFunctionsNotAlreadyPresentAndAnnotatedInThisClass(functionsFromSuperclasses))
-            properties.addAll(getOnlyPropertiesNotAlreadyPresentAndAnnotatedInThisClass(propertiesFromSuperclasses))
             signals.addAll(getOnlySignalsNotAlreadyPresentAndAnnotatedInThisClass(signalsFromSuperclasses))
+
+            val overriddenProperties = properties
+                .filter { registeredProperty -> registeredProperty.propertyDescriptor.overriddenDescriptors.isNotEmpty() }
+
+            properties.removeAll(overriddenProperties)
+            properties.addAll(overriddenProperties.map { it.copy(isOverriding = true) })
+
+            properties.addAll(
+                getOnlyPropertiesNotAlreadyPresentAndAnnotatedInThisClass(propertiesFromSuperclasses)
+                    .map { propertyDescriptor ->
+                        RegisteredProperty(
+                            propertyDescriptor,
+                            isInherited = true
+                        )
+                    }
+            )
+
+            propertiesFromSuperclasses
         }
 }
 
@@ -58,6 +81,7 @@ private fun ClassWithMembers.getOnlyPropertiesNotAlreadyPresentAndAnnotatedInThi
     propertiesFromSuperclasses
         .filter { propertyFromSuperClass ->
             properties
+                .map { it.propertyDescriptor }
                 .none { property ->
                     property.name == propertyFromSuperClass.name &&
                         property.returnType == propertyFromSuperClass.returnType
@@ -101,7 +125,7 @@ private fun ClassWithMembers.addOverriddenNotAnnotatedPropertyDescriptor(
 ) = (classDescriptor as LazyClassDescriptor)
     .declaredCallableMembers
     .filterIsInstance<PropertyDescriptor>()
-    .filter { propertyDescriptor -> !properties.contains(propertyDescriptor) }
+    .filter { propertyDescriptor -> !properties.map { it.propertyDescriptor }.contains(propertyDescriptor) }
     .filter { propertyDescriptor ->
         propertyDescriptor.name.asString() == superClassPropertyDescriptor.name.asString() &&
             propertyDescriptor.returnType == superClassPropertyDescriptor.returnType
@@ -114,7 +138,12 @@ private fun ClassWithMembers.addOverriddenNotAnnotatedPropertyDescriptor(
     }
     .firstOrNull()
     ?.let { propertyDescriptor ->
-        properties.add(propertyDescriptor)
+        properties.add(
+            RegisteredProperty(
+                propertyDescriptor,
+                isOverriding = true
+            )
+        )
         true
     } ?: false
 

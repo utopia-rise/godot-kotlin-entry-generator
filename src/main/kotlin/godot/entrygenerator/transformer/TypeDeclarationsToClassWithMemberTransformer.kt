@@ -1,6 +1,7 @@
 package godot.entrygenerator.transformer
 
 import godot.entrygenerator.model.ClassWithMembers
+import godot.entrygenerator.model.RegisteredProperty
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
@@ -21,7 +22,7 @@ fun transformTypeDeclarationsToClassWithMembers(
         classesWithMembers
             .first { it.classDescriptor == propertyDescriptor.containingDeclaration }
             .properties
-            .add(propertyDescriptor)
+            .add(RegisteredProperty(propertyDescriptor))
     }
 
     functions.forEach { functionDescriptor ->

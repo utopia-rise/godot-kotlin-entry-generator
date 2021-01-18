@@ -1,9 +1,6 @@
 package godot.entrygenerator.generator.clazz
 
-import com.squareup.kotlinpoet.ClassName
-import com.squareup.kotlinpoet.FileSpec
-import com.squareup.kotlinpoet.FunSpec
-import com.squareup.kotlinpoet.TypeSpec
+import com.squareup.kotlinpoet.*
 import godot.entrygenerator.extension.getAnnotationValue
 import godot.entrygenerator.extension.getSuperTypeNameAsString
 import godot.entrygenerator.model.*
@@ -14,6 +11,7 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import java.io.File
 import org.jetbrains.kotlin.resolve.descriptorUtil.getAllSuperclassesWithoutAny
+import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperClassNotAny
 
 abstract class ClassRegistrationGenerator {
 
@@ -39,7 +37,8 @@ abstract class ClassRegistrationGenerator {
     )
 
     abstract fun registerProperties(
-        properties: List<PropertyDescriptor>,
+        properties: MutableList<RegisteredProperty>,
+        classSpecificRegistryBuilder: TypeSpec.Builder,
         registerClassControlFlow: FunSpec.Builder,
         className: ClassName,
         bindingContext: BindingContext
@@ -55,7 +54,7 @@ abstract class ClassRegistrationGenerator {
             val classNameAsString = classWithMembers.classDescriptor.name.asString()
             val packagePath = classWithMembers.classDescriptor.fqNameSafe.parent().asString()
             val className = ClassName(packagePath, classNameAsString)
-            val superClass = classWithMembers.classDescriptor.getSuperTypeNameAsString()
+            val superClassFqName = classWithMembers.classDescriptor.getSuperTypeNameAsString()
             val godotBaseClass = classWithMembers
                 .classDescriptor
                 .getAllSuperclassesWithoutAny()
@@ -69,19 +68,40 @@ abstract class ClassRegistrationGenerator {
                 .asString()
                 .substringAfterLast(".")
 
+            val inheritedUserClass = classWithMembers
+                .classDescriptor
+                .getSuperClassNotAny()
+                ?.let { superClass ->
+                    val isGodotBaseClass = superClass
+                        .annotations
+                        .mapNotNull { it.fqName?.asString() }
+                        .contains(GODOT_BASE_TYPE_ANNOTATION)
+
+                    if (isGodotBaseClass) {
+                        null
+                    } else {
+                        superClass
+                    }
+                }
+
             classWithMembers.addRegisteredMembersOfSuperclassesForScriptInheritance(classesWithMembers)
 
             val registerClassControlFlow = provideRegisterClassControlFlow(
                 classWithMembers,
                 FunSpec
                     .builder("register")
+                    .addModifiers(KModifier.OVERRIDE)
                     .addParameter("registry", ClassName("godot.runtime", "ClassRegistry"))
                     .beginControlFlow("with(registry)"), //START: with registry
                 className,
-                superClass,
+                superClassFqName,
                 godotBaseClass,
                 isTool(classWithMembers.classDescriptor)
             ) //START: registerClass
+
+            val classSpecificRegistryBuilder = TypeSpec
+                .classBuilder("${classNameAsString}Registrar")
+                .addModifiers(KModifier.OPEN)
 
             registerFunctions(
                 classWithMembers.functions,
@@ -97,6 +117,7 @@ abstract class ClassRegistrationGenerator {
 
             registerProperties(
                 classWithMembers.properties,
+                classSpecificRegistryBuilder,
                 registerClassControlFlow,
                 className,
                 bindingContext
@@ -105,20 +126,26 @@ abstract class ClassRegistrationGenerator {
             registerClassControlFlow.endControlFlow() //END: registerClass
             registerClassControlFlow.endControlFlow() //END: with registry
 
+            classSpecificRegistryBuilder
+                .addFunction(registerClassControlFlow.build())
+
+            if (inheritedUserClass != null) {
+                val superClassPackagePath = inheritedUserClass.fqNameSafe.asString().substringBeforeLast(".")
+                val superClassSimpleName = inheritedUserClass.fqNameSafe.asString().substringAfterLast(".")
+                classSpecificRegistryBuilder.superclass(ClassName("godot.$superClassPackagePath", "${superClassSimpleName}Registrar"))
+            } else {
+                classSpecificRegistryBuilder.addSuperinterface(ClassName("godot.runtime", "ClassRegistrar"))
+            }
+
             FileSpec
                 .builder("godot.$packagePath", "${classNameAsString}Entry")
                 .addComment("THIS FILE IS GENERATED! DO NOT EDIT IT MANUALLY! ALL CHANGES TO IT WILL BE OVERWRITTEN ON EACH BUILD")
-                .addType(
-                    TypeSpec
-                        .objectBuilder("${classNameAsString}Registrar")
-                        .addFunction(registerClassControlFlow.build())
-                        .build()
-                )
+                .addType(classSpecificRegistryBuilder.build())
                 .build()
                 .writeTo(File(outputPath))
 
             mainEntryRegistryControlFlow
-                .addStatement("%T.register(registry)", ClassName("godot.$packagePath", "${classNameAsString}Registrar"))
+                .addStatement("%T().register(registry)", ClassName("godot.$packagePath", "${classNameAsString}Registrar"))
         }
     }
 

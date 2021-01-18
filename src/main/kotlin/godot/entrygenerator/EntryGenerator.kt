@@ -125,7 +125,7 @@ object EntryGenerator {
             .forEach { classFqName ->
                 val packagePath = classFqName.substringBeforeLast(".")
                 val classNameAsString = classFqName.substringAfterLast(".")
-                mainEntryRegistryControlFlow.addStatement("%T.register(registry)", ClassName("godot.$packagePath", "${classNameAsString}Registrar"))
+                mainEntryRegistryControlFlow.addStatement("%T().register(registry)", ClassName("godot.$packagePath", "${classNameAsString}Registrar"))
             }
     }
 }

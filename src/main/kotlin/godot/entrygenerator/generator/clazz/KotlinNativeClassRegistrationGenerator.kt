@@ -2,11 +2,13 @@ package godot.entrygenerator.generator.clazz
 
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FunSpec
+import com.squareup.kotlinpoet.TypeSpec
 import godot.entrygenerator.EntryGenerationType
 import godot.entrygenerator.generator.function.FunctionRegistrationGeneratorProvider
 import godot.entrygenerator.generator.property.PropertyRegistrationGeneratorProvider
 import godot.entrygenerator.generator.signal.SignalRegistrationGeneratorProvider
 import godot.entrygenerator.model.ClassWithMembers
+import godot.entrygenerator.model.RegisteredProperty
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -35,9 +37,22 @@ class KotlinNativeClassRegistrationGenerator : ClassRegistrationGenerator() {
             .registerSignals(signals, className, registerClassControlFlow)
     }
 
-    override fun registerProperties(properties: List<PropertyDescriptor>, registerClassControlFlow: FunSpec.Builder, className: ClassName, bindingContext: BindingContext) {
+    override fun registerProperties(
+        properties: MutableList<RegisteredProperty>,
+        classSpecificRegistryBuilder: TypeSpec.Builder,
+        registerClassControlFlow: FunSpec.Builder,
+        className: ClassName,
+        bindingContext: BindingContext
+    ) {
         PropertyRegistrationGeneratorProvider
             .provide(EntryGenerationType.KOTLIN_NATIVE)
-            .registerProperties(properties, registerClassControlFlow, className, bindingContext, EntryGenerationType.KOTLIN_NATIVE)
+            .registerProperties(
+                properties,
+                classSpecificRegistryBuilder,
+                registerClassControlFlow,
+                className,
+                bindingContext,
+                EntryGenerationType.KOTLIN_NATIVE
+            )
     }
 }

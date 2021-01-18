@@ -35,7 +35,12 @@ val PropertyDescriptor.assignmentPsi: KtExpression
                 .first { it.first.fqName?.asString() == containingDeclaration.fqNameSafe.asString() }
                 .second
                 .first { it.name == this.name.asString() }
-                .initializer!! // should not be null
+                .let { ktProperty ->
+                    ktProperty
+                        .initializer
+                        ?: ktProperty.delegateExpression
+
+                }!! // should not be null
         } else {
             ((this
                 .source as KotlinSourceElement)
