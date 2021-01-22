@@ -6,6 +6,7 @@ import com.squareup.kotlinpoet.FunSpec
 import godot.entrygenerator.EntryGenerationType
 import godot.entrygenerator.generator.clazz.ClassRegistrationGeneratorProvider
 import godot.entrygenerator.model.ClassWithMembers
+import godot.entrygenerator.model.PsiClassWithMembers
 import org.jetbrains.kotlin.resolve.BindingContext
 
 class KotlinNativeEntryFileBuilder(bindingContext: BindingContext): EntryFileBuilder(bindingContext) {
@@ -33,7 +34,10 @@ class KotlinNativeEntryFileBuilder(bindingContext: BindingContext): EntryFileBui
         .addParameter("handle", ClassName("kotlinx.cinterop", "COpaquePointer"))
         .addStatement("%T.nativescriptInit(handle)", ClassName("godot.core", "Godot"))
 
-    override fun registerClassesWithMembers(classesWithMembers: Set<ClassWithMembers>, outputPath: String): EntryFileBuilder {
+    override fun registerClassesWithMembers(
+        classesWithMembers: Set<ClassWithMembers>,
+        outputPath: String
+    ): EntryFileBuilder {
         val classRegistryControlFlow = nativeScriptInitFunctionSpec
             .beginControlFlow(
                 "with(%T(handle))·{",
@@ -42,7 +46,12 @@ class KotlinNativeEntryFileBuilder(bindingContext: BindingContext): EntryFileBui
 
         ClassRegistrationGeneratorProvider
             .provideClassRegistrationProvider(EntryGenerationType.KOTLIN_NATIVE)
-            .registerClasses(classesWithMembers, classRegistryControlFlow, bindingContext, outputPath)
+            .registerClasses(
+                classesWithMembers,
+                classRegistryControlFlow,
+                bindingContext,
+                outputPath
+            )
 
         classRegistryControlFlow.endControlFlow() //END: with ClassRegistry
         return this

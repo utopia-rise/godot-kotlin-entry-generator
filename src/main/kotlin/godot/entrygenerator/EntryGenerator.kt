@@ -6,16 +6,23 @@ import godot.entrygenerator.filebuilder.EntryFileBuilderProvider
 import godot.entrygenerator.generator.GdnsGenerator
 import godot.entrygenerator.generator.ServiceGenerator
 import godot.entrygenerator.model.ClassWithMembers
+import godot.entrygenerator.model.PsiClassWithMembers
 import godot.entrygenerator.transformer.transformTypeDeclarationsToClassWithMembers
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import java.io.File
 
 object EntryGenerator {
+    /**
+     * Only needed on the JVM to get propertyPsiAssignments on not recompiled compiled parent classes on
+     * incremental builds
+     */
+    var psiClassesWithMembers: List<PsiClassWithMembers> = listOf()
 
     fun generateEntryFiles(
         generationType: EntryGenerationType,
@@ -51,6 +58,13 @@ object EntryGenerator {
 
     fun generateServiceFile(serviceFileDir: String) = ServiceGenerator.generateServiceFile(serviceFileDir)
 
+    /**
+     * To be called from gradle plugin
+     *
+     * Deletes old entry files and regenerated the main entry file with calls to all existing and new class specific entry files.
+     *
+     * Needed for incremental compilation
+     */
     fun deleteOldEntryFilesAndReGenerateMainEntryFile(sourceDirs: List<String>, outputPath: String) {
         val userClassesFqNames = CompilerEnvironmentProvider
             .provide(sourceDirs)
@@ -118,7 +132,7 @@ object EntryGenerator {
             .forEach { classFqName ->
                 val packagePath = classFqName.substringBeforeLast(".")
                 val classNameAsString = classFqName.substringAfterLast(".")
-                mainEntryRegistryControlFlow.addStatement("%T.register(registry)", ClassName("godot.$packagePath", "${classNameAsString}Registrar"))
+                mainEntryRegistryControlFlow.addStatement("%T().register(registry)", ClassName("godot.$packagePath", "${classNameAsString}Registrar"))
             }
     }
 }

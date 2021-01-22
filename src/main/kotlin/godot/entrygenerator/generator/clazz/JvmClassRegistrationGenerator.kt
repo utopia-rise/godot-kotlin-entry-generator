@@ -2,11 +2,13 @@ package godot.entrygenerator.generator.clazz
 
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FunSpec
+import com.squareup.kotlinpoet.TypeSpec
 import godot.entrygenerator.EntryGenerationType
 import godot.entrygenerator.generator.function.FunctionRegistrationGeneratorProvider
 import godot.entrygenerator.generator.property.PropertyRegistrationGeneratorProvider
 import godot.entrygenerator.generator.signal.SignalRegistrationGeneratorProvider
 import godot.entrygenerator.model.ClassWithMembers
+import godot.entrygenerator.model.RegisteredProperty
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
@@ -58,9 +60,15 @@ class JvmClassRegistrationGenerator : ClassRegistrationGenerator() {
             .registerSignals(signals, className, registerClassControlFlow)
     }
 
-    override fun registerProperties(properties: List<PropertyDescriptor>, registerClassControlFlow: FunSpec.Builder, className: ClassName, bindingContext: BindingContext) {
+    override fun registerProperties(
+        registeredProperties: MutableList<RegisteredProperty>,
+        classSpecificRegistryBuilder: TypeSpec.Builder,
+        registerClassControlFlow: FunSpec.Builder,
+        className: ClassName,
+        bindingContext: BindingContext
+    ) {
         PropertyRegistrationGeneratorProvider
             .provide(EntryGenerationType.JVM)
-            .registerProperties(properties, registerClassControlFlow, className, bindingContext, EntryGenerationType.JVM)
+            .registerProperties(registeredProperties, classSpecificRegistryBuilder, registerClassControlFlow, className, bindingContext)
     }
 }
