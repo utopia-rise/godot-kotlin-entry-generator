@@ -11,7 +11,7 @@ import godot.entrygenerator.generator.property.PropertyRegistrationGeneratorProv
 import godot.entrygenerator.generator.signal.SignalRegistrationGeneratorProvider
 import godot.entrygenerator.model.ClassWithMembers
 import godot.entrygenerator.model.REGISTER_CLASS_ANNOTATION
-import godot.entrygenerator.model.REGISTER_CLASS_ANNOTATION_CUSTOM_NAME_ARGUMENT
+import godot.entrygenerator.model.REGISTER_CLASS_ANNOTATION_NAME_ARGUMENT
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import godot.entrygenerator.model.RegisteredProperty
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
@@ -58,7 +58,7 @@ class JvmClassRegistrationGenerator : ClassRegistrationGenerator() {
     }
 
     private fun getClassNameAsString(classDescriptor: ClassDescriptor): String {
-        val customClassName = classDescriptor.annotations.getAnnotationValue(REGISTER_CLASS_ANNOTATION, REGISTER_CLASS_ANNOTATION_CUSTOM_NAME_ARGUMENT, "")
+        val customClassName = classDescriptor.annotations.getAnnotationValue(REGISTER_CLASS_ANNOTATION, REGISTER_CLASS_ANNOTATION_NAME_ARGUMENT, "")
         return if (customClassName.isNotEmpty()) {
             customClassName
         } else {
