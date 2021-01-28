@@ -2,6 +2,8 @@ package godot.entrygenerator
 
 import com.squareup.kotlinpoet.*
 import godot.entrygenerator.compiler.CompilerEnvironmentProvider
+import godot.entrygenerator.exceptions.ClassNameRegistrationException
+import godot.entrygenerator.extension.getFqNameToRegisteredClassNamePair
 import godot.entrygenerator.filebuilder.EntryFileBuilderProvider
 import godot.entrygenerator.generator.GdnsGenerator
 import godot.entrygenerator.generator.ServiceGenerator
@@ -12,7 +14,6 @@ import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.psi.KtClass
-import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import java.io.File
@@ -45,6 +46,8 @@ object EntryGenerator {
                 outputPath
             )
             .build(outputPath)
+
+        classNameSanityCheck()
     }
 
     fun generateGdnsFiles(
@@ -80,7 +83,8 @@ object EntryGenerator {
             .walkTopDown()
             .filter { it.isFile && it.exists() && it.extension == "kt" }
             .forEach {
-                val fqName = it.absolutePath.removePrefix(outputPath).removePrefix("/godot/").replace("/", ".").removeSuffix("Entry.kt")
+                val fqName = it.absolutePath.removePrefix(outputPath).removePrefix("/godot/").replace("/", ".")
+                    .removeSuffix("Entry.kt")
                 if (!userClassesFqNames.contains(fqName) && it.name != "Entry") {
                     it.delete()
                 }
@@ -117,14 +121,20 @@ object EntryGenerator {
             .writeTo(File(outputPath))
     }
 
-    internal fun addCallsToExistingEntryFilesToMainEntryRegistry(outputPath: String, classesWithMembersInCurrentCompilationRound: Set<ClassWithMembers>, mainEntryRegistryControlFlow: FunSpec.Builder) {
-        val classesFqNamesInCurrentCompilationRound = classesWithMembersInCurrentCompilationRound.map { it.classDescriptor.fqNameSafe.asString() }
+    internal fun addCallsToExistingEntryFilesToMainEntryRegistry(
+        outputPath: String,
+        classesWithMembersInCurrentCompilationRound: Set<ClassWithMembers>,
+        mainEntryRegistryControlFlow: FunSpec.Builder
+    ) {
+        val classesFqNamesInCurrentCompilationRound = classesWithMembersInCurrentCompilationRound
+            .map { it.classDescriptor.fqNameSafe.asString() }
         File(outputPath)
             .walkTopDown()
             .filter { it.isFile && it.exists() && it.extension == "kt" }
             .map { entryFile ->
                 if (entryFile.name != "Entry") {
-                    entryFile.absolutePath.removePrefix(outputPath).removePrefix("/godot/").replace("/", ".").removeSuffix("Entry.kt")
+                    entryFile.absolutePath.removePrefix(outputPath).removePrefix("/godot/").replace("/", ".")
+                        .removeSuffix("Entry.kt")
                 } else null
             }
             .filterNotNull()
@@ -132,7 +142,46 @@ object EntryGenerator {
             .forEach { classFqName ->
                 val packagePath = classFqName.substringBeforeLast(".")
                 val classNameAsString = classFqName.substringAfterLast(".")
-                mainEntryRegistryControlFlow.addStatement("%T().register(registry)", ClassName("godot.$packagePath", "${classNameAsString}Registrar"))
+                mainEntryRegistryControlFlow.addStatement(
+                    "%T().register(registry)",
+                    ClassName("godot.$packagePath", "${classNameAsString}Registrar")
+                )
             }
+    }
+
+    internal val registeredClassNames: MutableList<Pair<String, String>> = mutableListOf()
+    private fun classNameSanityCheck() {
+        psiClassesWithMembers
+            .map { psiClassWithMembers ->
+                psiClassWithMembers.ktClass
+            }
+            .filter { it.fqName != null }
+            .mapNotNull { ktClass -> ktClass.getFqNameToRegisteredClassNamePair() }
+            .forEach { (fqName, registeredClassName) ->
+                if (!registeredClassNames.map { it.first }.contains(fqName)) {
+                    registeredClassNames.add(fqName to registeredClassName)
+                }
+            }
+
+        val duplicatedClasses = registeredClassNames
+            .groupBy { it.second }
+            .filter { it.value.size > 1 }
+            .map { it.value }
+
+        if (duplicatedClasses.isNotEmpty()) {
+            val exceptionMessage = buildString {
+                appendln("There are classes registered with the same name. Check your customName argument for the annotation @RegisterClass:")
+                duplicatedClasses
+                    .forEachIndexed { index, duplications ->
+                        if (index != 0) {
+                            appendln("---")
+                        }
+                        duplications.forEach { (classFqName, registeredName) ->
+                            appendln("RegisteredName: $registeredName, ActualClass: $classFqName")
+                        }
+                    }
+            }
+            throw ClassNameRegistrationException(exceptionMessage)
+        }
     }
 }
