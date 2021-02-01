@@ -71,6 +71,9 @@ object EntryGenerator {
      * Needed for incremental compilation
      */
     fun deleteOldEntryFilesAndReGenerateMainEntryFile(sourceDirs: List<String>, outputPath: String) {
+        val srcDirs = sourceDirs
+            .map { it.removePrefix(File(outputPath).parentFile.parentFile.absolutePath) }
+
         val userClassesFqNames = CompilerEnvironmentProvider
             .provide(sourceDirs)
             .getSourceFiles()
@@ -117,6 +120,17 @@ object EntryGenerator {
                             .addStatement("%M()", MemberName("godot", "registerEngineTypeMethods"))
                             .build()
                     )
+                    .addFunction(
+                        FunSpec
+                            .builder("provideSrcDirs")
+                            .addModifiers(KModifier.OVERRIDE)
+                            .addStatement(
+                                "return listOf<%T>(${srcDirs.joinToString(", ") { "%S" }})",
+                                String::class,
+                                *srcDirs.toTypedArray()
+                            )
+                            .build()
+                    )
                     .build()
             )
             .build()
@@ -142,11 +156,15 @@ object EntryGenerator {
             .filterNotNull()
             .filter { classFqName -> !classesFqNamesInCurrentCompilationRound.contains(classFqName) }
             .forEach { classFqName ->
-                val packagePath = classFqName.substringBeforeLast(".")
+                val packagePath = if (!classFqName.contains(".")) {
+                    "godot"
+                } else {
+                    "godot.${classFqName.substringBeforeLast(".")}"
+                }
                 val classNameAsString = classFqName.substringAfterLast(".")
                 mainEntryRegistryControlFlow.addStatement(
                     "%T().register(registry)",
-                    ClassName("godot.$packagePath", "${classNameAsString}Registrar")
+                    ClassName(packagePath, "${classNameAsString}Registrar")
                 )
             }
     }
