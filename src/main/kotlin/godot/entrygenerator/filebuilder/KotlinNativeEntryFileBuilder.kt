@@ -36,7 +36,8 @@ class KotlinNativeEntryFileBuilder(bindingContext: BindingContext): EntryFileBui
 
     override fun registerClassesWithMembers(
         classesWithMembers: Set<ClassWithMembers>,
-        outputPath: String
+        outputPath: String,
+        srcDirs: List<String>
     ): EntryFileBuilder {
         val classRegistryControlFlow = nativeScriptInitFunctionSpec
             .beginControlFlow(

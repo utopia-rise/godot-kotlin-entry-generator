@@ -12,7 +12,8 @@ class JvmEntryFileBuilder(bindingContext: BindingContext): EntryFileBuilder(bind
 
     override fun registerClassesWithMembers(
         classesWithMembers: Set<ClassWithMembers>,
-        outputPath: String
+        outputPath: String,
+        srcDirs: List<String>
     ): EntryFileBuilder {
         val entryClassSpec = TypeSpec
             .classBuilder(ClassName("godot", "Entry"))
@@ -28,6 +29,11 @@ class JvmEntryFileBuilder(bindingContext: BindingContext): EntryFileBuilder(bind
                 .receiver(ClassName("godot.runtime.Entry", "Context"))
                 .addModifiers(KModifier.OVERRIDE)
 
+        val provideSrcDirsFunSpec = FunSpec
+            .builder("provideSrcDirs")
+            .addModifiers(KModifier.OVERRIDE)
+            .addStatement("return listOf<%T>(${srcDirs.joinToString(", ") { "%S" }})", String::class, *srcDirs.toTypedArray())
+
         EntryGenerator.addCallsToExistingEntryFilesToMainEntryRegistry(outputPath, classesWithMembers, initFunctionSpec)
 
         ClassRegistrationGeneratorProvider
@@ -40,6 +46,7 @@ class JvmEntryFileBuilder(bindingContext: BindingContext): EntryFileBuilder(bind
 
         entryClassSpec.addFunction(initFunctionSpec.build())
         entryClassSpec.addFunction(initEngineTypesFunSpec.build())
+        entryClassSpec.addFunction(provideSrcDirsFunSpec.build())
         entryFileSpec.addType(entryClassSpec.build())
         return this
     }

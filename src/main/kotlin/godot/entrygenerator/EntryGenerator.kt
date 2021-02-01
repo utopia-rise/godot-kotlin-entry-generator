@@ -32,7 +32,8 @@ object EntryGenerator {
         classes: Set<ClassDescriptor>,
         properties: Set<PropertyDescriptor>,
         functions: Set<FunctionDescriptor>,
-        signals: Set<PropertyDescriptor>
+        signals: Set<PropertyDescriptor>,
+        srcDirs: List<String>
     ) {
         EntryFileBuilderProvider
             .provideMainEntryFileBuilder(generationType, bindingContext)
@@ -43,7 +44,8 @@ object EntryGenerator {
                     functions,
                     signals
                 ),
-                outputPath
+                outputPath,
+                srcDirs
             )
             .build(outputPath)
 

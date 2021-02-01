@@ -13,7 +13,8 @@ abstract class EntryFileBuilder(val bindingContext: BindingContext) {
 
     abstract fun registerClassesWithMembers(
         classesWithMembers: Set<ClassWithMembers>,
-        outputPath: String
+        outputPath: String,
+        srcDirs: List<String> = listOf()
     ): EntryFileBuilder
 
     open fun build(outputPath: String) {

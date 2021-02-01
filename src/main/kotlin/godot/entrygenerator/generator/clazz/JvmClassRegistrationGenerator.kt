@@ -64,7 +64,7 @@ class JvmClassRegistrationGenerator : ClassRegistrationGenerator() {
         } else {
             val packagePath = classDescriptor.fqNameSafe.parent().asString()
             val simpleName = classDescriptor.fqNameSafe.shortName().asString()
-            "${packagePath.replace(".", "_")}_$simpleName"
+            "${packagePath.replace(".", "_")}_$simpleName".removePrefix("_")
         }
     }
 
