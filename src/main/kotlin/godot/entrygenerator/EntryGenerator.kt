@@ -73,6 +73,8 @@ object EntryGenerator {
     fun deleteOldEntryFilesAndReGenerateMainEntryFile(sourceDirs: List<String>, outputPath: String) {
         val srcDirs = sourceDirs
             .map { it.removePrefix(File(outputPath).parentFile.parentFile.absolutePath) }
+            .map { it.removePrefix("/") }
+            .map { path -> "$path/" }
 
         val userClassesFqNames = CompilerEnvironmentProvider
             .provide(sourceDirs)
