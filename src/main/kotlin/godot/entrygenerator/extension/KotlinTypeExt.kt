@@ -4,13 +4,15 @@ import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.asTypeName
 import godot.entrygenerator.EntryGenerationType
+import godot.entrygenerator.model.GODOT_BASE_TYPE_ANNOTATION
 import org.jetbrains.kotlin.js.descriptorUtils.getJetTypeFqName
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.*
 
 
 fun KotlinType.isCoreType(): Boolean {
-    return coreTypes.contains(getJetTypeFqName(false))
+    return coreTypes.contains(getJetTypeFqName(false).removeSuffix("?"))
 }
 
 private fun getReferenceFqName(entryGenerationType: EntryGenerationType) = when (entryGenerationType) {
@@ -97,16 +99,17 @@ private val coreTypes = listOf(
 
 
 fun KotlinType?.toReturnKtVariantType(): ClassName {
+    if (this == null) throw IllegalStateException("Type is null")
+    val typeFqNameNonNull = getJetTypeFqName(false).removeSuffix("?")
     return when {
-        this == null -> throw IllegalStateException("Type is null")
-        isUnit() -> ClassName("godot.core.VariantType", "NIL")
-        isInt() || isLong() -> ClassName("godot.core.VariantType", "LONG")
-        isFloat() || isDouble() -> ClassName("godot.core.VariantType", "DOUBLE")
-        getJetTypeFqName(false) == "kotlin.String" -> ClassName("godot.core.VariantType", "STRING")
+        typeFqNameNonNull == "kotlin.Unit" -> ClassName("godot.core.VariantType", "NIL")
+        typeFqNameNonNull == "kotlin.Int" || typeFqNameNonNull == "kotlin.Long" -> ClassName("godot.core.VariantType", "LONG")
+        typeFqNameNonNull == "kotlin.Float" || typeFqNameNonNull == "kotlin.Double" -> ClassName("godot.core.VariantType", "DOUBLE")
+        typeFqNameNonNull == "kotlin.String" -> ClassName("godot.core.VariantType", "STRING")
         isBooleanOrNullableBoolean() -> ClassName("godot.core.VariantType", "BOOL")
-        isByte() -> ClassName("godot.core.VariantType", "JVM_BYTE")
-        getJetTypeFqName(false) == "godot.core.VariantArray" -> ClassName("godot.core.VariantType", "ARRAY")
-        getJetTypeFqName(false) == "godot.core.RID" -> ClassName("godot.core.VariantType", "_RID")
+        typeFqNameNonNull == "kotlin.Byte" -> ClassName("godot.core.VariantType", "JVM_BYTE")
+        typeFqNameNonNull == "godot.core.VariantArray" -> ClassName("godot.core.VariantType", "ARRAY")
+        typeFqNameNonNull == "godot.core.RID" -> ClassName("godot.core.VariantType", "_RID")
         isCoreType() -> ClassName("godot.core.VariantType", getJetTypeFqName(false).substringAfterLast(".").camelToSnakeCase().toUpperCase())
         isAnyOrNullableAny() -> ClassName("godot.core.VariantType", "ANY")
         supertypes().any { it.isAnyOrNullableAny() } -> ClassName("godot.core.VariantType", "OBJECT")
@@ -114,19 +117,22 @@ fun KotlinType?.toReturnKtVariantType(): ClassName {
     }
 }
 
-fun KotlinType.toParameterKtVariantType() = when {
-    isInt() -> ClassName("godot.core.VariantType", "JVM_INT")
-    isLong() -> ClassName("godot.core.VariantType", "LONG")
-    isFloat() -> ClassName("godot.core.VariantType", "JVM_FLOAT")
-    isDouble() -> ClassName("godot.core.VariantType", "DOUBLE")
-    getJetTypeFqName(false) == "kotlin.String" -> ClassName("godot.core.VariantType", "STRING")
-    isBooleanOrNullableBoolean() -> ClassName("godot.core.VariantType", "BOOL")
-    isByte() -> ClassName("godot.core.VariantType", "JVM_BYTE")
-    getJetTypeFqName(false) == "godot.core.VariantArray" -> ClassName("godot.core.VariantType", "ARRAY")
-    getJetTypeFqName(false) == "godot.core.RID" -> ClassName("godot.core.VariantType", "_RID")
-    isCoreType() -> ClassName("godot.core.VariantType", getJetTypeFqName(false).substringAfterLast(".").camelToSnakeCase().toUpperCase())
-    isUnit() -> ClassName("godot.core.VariantType", "NIL")
-    isAnyOrNullableAny() -> ClassName("godot.core.VariantType", "ANY")
-    supertypes().any { it.isAnyOrNullableAny() } -> ClassName("godot.core.VariantType", "OBJECT")
-    else -> throw IllegalStateException("ParameterType $this cannot be handled by godot")
+fun KotlinType.toParameterKtVariantType(): ClassName {
+    val typeFqNameNonNull = getJetTypeFqName(false).removeSuffix("?")
+    return when {
+        typeFqNameNonNull == "kotlin.Int" -> ClassName("godot.core.VariantType", "JVM_INT")
+        typeFqNameNonNull == "kotlin.Long" -> ClassName("godot.core.VariantType", "LONG")
+        typeFqNameNonNull == "kotlin.Float" -> ClassName("godot.core.VariantType", "JVM_FLOAT")
+        typeFqNameNonNull == "kotlin.Double" -> ClassName("godot.core.VariantType", "DOUBLE")
+        typeFqNameNonNull == "kotlin.String" -> ClassName("godot.core.VariantType", "STRING")
+        isBooleanOrNullableBoolean() -> ClassName("godot.core.VariantType", "BOOL")
+        typeFqNameNonNull == "kotlin.Byte" -> ClassName("godot.core.VariantType", "JVM_BYTE")
+        typeFqNameNonNull == "godot.core.VariantArray" -> ClassName("godot.core.VariantType", "ARRAY")
+        typeFqNameNonNull == "godot.core.RID" -> ClassName("godot.core.VariantType", "_RID")
+        isCoreType() -> ClassName("godot.core.VariantType", getJetTypeFqName(false).substringAfterLast(".").camelToSnakeCase().toUpperCase())
+        typeFqNameNonNull == "kotlin.Unit" -> ClassName("godot.core.VariantType", "NIL")
+        isAnyOrNullableAny() -> ClassName("godot.core.VariantType", "ANY")
+        supertypes().any { it.isAnyOrNullableAny() } -> ClassName("godot.core.VariantType", "OBJECT")
+        else -> throw IllegalStateException("ParameterType $this cannot be handled by godot")
+    }
 }

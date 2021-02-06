@@ -94,7 +94,7 @@ object PropertyTypeHintProvider {
                     "RESOURCE_TYPE"
                 )
             }
-            else -> throw IllegalStateException("There is no type hint generator for the property descriptor $propertyDescriptor")
+            else -> ClassName("godot.core.PropertyHint", "NONE")
         }
     }
 }
