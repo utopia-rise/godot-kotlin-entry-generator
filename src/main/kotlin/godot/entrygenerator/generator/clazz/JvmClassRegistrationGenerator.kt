@@ -26,10 +26,11 @@ class JvmClassRegistrationGenerator : ClassRegistrationGenerator() {
         val classNameAsString = getClassNameAsString(classWithMembers.classDescriptor)
         EntryGenerator.registeredClassNames.add(classWithMembers.classDescriptor.fqNameSafe.asString() to classNameAsString)
         classRegistryControlFlow.beginControlFlow(
-            "registerClass<%T>(%T::class.qualifiedName!!,·%S,·$isTool,·%S,·%S)·{",
+            "registerClass<%T>(%T::class.qualifiedName!!,·%S,·%T::class,·$isTool,·%S,·%S)·{",
             className,
             className,
             superClass,
+            className,
             godotBaseClass,
             classNameAsString
         )
