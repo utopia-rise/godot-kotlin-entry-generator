@@ -1,6 +1,7 @@
 package godot.entrygenerator.extension
 
 import godot.entrygenerator.EntryGenerator
+import godot.entrygenerator.model.REGISTER_PROPERTY_ANNOTATION
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.name.FqName
@@ -20,7 +21,7 @@ fun PropertyDescriptor.getPropertyHintAnnotation(): AnnotationDescriptor? {
         throw IllegalStateException("The property ${this.name} has multiple PropertyHintAnnotations. You can only specify one! Defined Annotations: $propertyHintAnnotations")
     }
 
-    if (propertyHintAnnotations.isNotEmpty() && !annotations.hasAnnotation(FqName("godot.annotation.RegisterProperty"))) {
+    if (propertyHintAnnotations.isNotEmpty() && !annotations.hasAnnotation(FqName(REGISTER_PROPERTY_ANNOTATION))) {
         throw IllegalStateException("The property ${this.name} has a ${propertyHintAnnotations.first()?.fqName} annotation but is not annotated with @RegisterProperty. Add the @RegisterProperty annotation or remove the ${propertyHintAnnotations.first()?.fqName} annotation")
     }
 
