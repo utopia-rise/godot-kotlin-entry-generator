@@ -75,6 +75,7 @@ object EntryGenerator {
      * Needed for incremental compilation
      */
     fun deleteOldEntryFilesAndReGenerateMainEntryFile(sourceDirs: List<String>, outputPath: String) {
+
         val userClassesFqNames = CompilerEnvironmentProvider
             .provide(sourceDirs)
             .getSourceFiles()
@@ -89,8 +90,13 @@ object EntryGenerator {
             .walkTopDown()
             .filter { it.isFile && it.exists() && it.extension == "kt" }
             .forEach {
-                val fqName = it.absolutePath.removePrefix(outputPath).removePrefix("/godot/").replace("/", ".")
+                val fqName = it
+                    .absolutePath
+                    .removePrefix(outputPath)
+                    .removePrefix("${File.separator}godot${File.separator}")
+                    .replace(File.separator, ".")
                     .removeSuffix("Entry.kt")
+
                 if (!userClassesFqNames.contains(fqName) && it.name != "Entry") {
                     it.delete()
                 }
@@ -139,7 +145,11 @@ object EntryGenerator {
             .filter { it.isFile && it.exists() && it.extension == "kt" }
             .map { entryFile ->
                 if (entryFile.name != "Entry") {
-                    entryFile.absolutePath.removePrefix(outputPath).removePrefix("/godot/").replace("/", ".")
+                    entryFile
+                        .absolutePath
+                        .removePrefix(outputPath)
+                        .removePrefix("${File.separator}godot${File.separator}")
+                        .replace(File.separator, ".")
                         .removeSuffix("Entry.kt")
                 } else null
             }
