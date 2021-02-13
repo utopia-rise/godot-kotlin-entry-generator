@@ -3,12 +3,15 @@ package godot.entrygenerator
 import com.squareup.kotlinpoet.*
 import godot.entrygenerator.compiler.CompilerEnvironmentProvider
 import godot.entrygenerator.exceptions.ClassNameRegistrationException
+import godot.entrygenerator.exceptions.MultipleClassesPerFileRegistrationException
+import godot.entrygenerator.exceptions.WrongPackagePathRegistrationException
 import godot.entrygenerator.extension.getFqNameToRegisteredClassNamePair
 import godot.entrygenerator.filebuilder.EntryFileBuilderProvider
 import godot.entrygenerator.generator.GdnsGenerator
 import godot.entrygenerator.generator.ServiceGenerator
 import godot.entrygenerator.model.ClassWithMembers
 import godot.entrygenerator.model.PsiClassWithMembers
+import godot.entrygenerator.model.REGISTER_CLASS_ANNOTATION
 import godot.entrygenerator.transformer.transformTypeDeclarationsToClassWithMembers
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
@@ -32,7 +35,8 @@ object EntryGenerator {
         classes: Set<ClassDescriptor>,
         properties: Set<PropertyDescriptor>,
         functions: Set<FunctionDescriptor>,
-        signals: Set<PropertyDescriptor>
+        signals: Set<PropertyDescriptor>,
+        srcDirs: List<String>
     ) {
         EntryFileBuilderProvider
             .provideMainEntryFileBuilder(generationType, bindingContext)
@@ -48,6 +52,8 @@ object EntryGenerator {
             .build(outputPath)
 
         classNameSanityCheck()
+        oneClassPerFileSanityCheck()
+        packagePathSanityCheck(srcDirs)
     }
 
     fun generateGdnsFiles(
@@ -182,6 +188,49 @@ object EntryGenerator {
                     }
             }
             throw ClassNameRegistrationException(exceptionMessage)
+        }
+    }
+
+    private fun oneClassPerFileSanityCheck() {
+        val filesWithMultipleRegisteredClasses = psiClassesWithMembers
+            .asSequence()
+            .map { it.ktClass }
+            .map { it.containingKtFile }
+            .toSet()
+            .filter { ktFile ->
+                ktFile
+                    .classes
+                    .filter { ktClass ->
+                        ktClass
+                            .annotations
+                            .firstOrNull { annotation -> annotation.qualifiedName == REGISTER_CLASS_ANNOTATION } != null
+                    }
+                    .size > 1
+            }
+            .toSet()
+
+        if (filesWithMultipleRegisteredClasses.isNotEmpty()) {
+            throw MultipleClassesPerFileRegistrationException("Only one registered class per file is allowed! The following files contain more than one registered class:\n${filesWithMultipleRegisteredClasses.joinToString("\n") { it.virtualFilePath }}")
+        }
+    }
+
+    private fun packagePathSanityCheck(srcDirs: List<String>) {
+        val classesWithWrongPackagePath = psiClassesWithMembers
+            .asSequence()
+            .map { it.ktClass }
+            .filter { ktClass ->
+                var containingFilePath = ktClass.containingKtFile.virtualFile.path
+                srcDirs.forEach { srcDir ->
+                    containingFilePath = containingFilePath.removePrefix(srcDir)
+                }
+                containingFilePath = containingFilePath.removePrefix(File.separator).removeSuffix(".kt")
+                val packagePath = ktClass.fqName?.asString()?.replace(".", File.separator)
+                packagePath != containingFilePath
+            }
+            .toSet()
+
+        if (classesWithWrongPackagePath.isNotEmpty()) {
+            throw WrongPackagePathRegistrationException("Package path of registered classes has to match the directory they are stored in! Also the file name has to match the class name! The following classes have wrong package path's or wrong file names:\n${classesWithWrongPackagePath.joinToString("\n") { it.fqName?.asString() ?: "" }}")
         }
     }
 }
