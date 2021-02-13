@@ -78,7 +78,11 @@ object PropertyHintStringGeneratorProvider {
                 propertyDescriptor,
                 bindingContext
             )
-            else -> throw IllegalStateException("There is no hint string generator for the property descriptor $propertyDescriptor")
+            else -> object : PropertyHintStringGenerator(propertyDescriptor, bindingContext) {
+                override fun getHintString(): String {
+                    return ""
+                }
+            }
         }
     }
 }

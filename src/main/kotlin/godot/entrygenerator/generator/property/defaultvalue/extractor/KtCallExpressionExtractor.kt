@@ -4,6 +4,10 @@ import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.MemberName
 import org.jetbrains.kotlin.backend.common.serialization.findPackage
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
+import org.jetbrains.kotlin.descriptors.ClassConstructorDescriptor
+import org.jetbrains.kotlin.descriptors.FunctionDescriptor
+import org.jetbrains.kotlin.descriptors.impl.ClassConstructorDescriptorImpl
+import org.jetbrains.kotlin.descriptors.impl.FunctionDescriptorImpl
 import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtConstructor
@@ -54,7 +58,7 @@ object KtCallExpressionExtractor {
                     return "%T(${transformedArgs.joinToString { it!!.first }})" to params.toTypedArray()
                 }
                 //constructor
-                ref is DeserializedClassConstructorDescriptor && !hasNullArg -> {
+                ref is ClassConstructorDescriptor && !hasNullArg -> {
                     val fqName = ref.constructedClass.fqNameSafe
                     val pkg = fqName.parent().asString()
                     val className = fqName.shortName().asString()
@@ -65,7 +69,7 @@ object KtCallExpressionExtractor {
                 }
                 //godot arrays and kotlin collections
                 //Note: kotlin collections only as constructor arguments or function params. TypeToVariantAsClassNameMapper already enshures that they are not registered as property types
-                ref is DeserializedSimpleFunctionDescriptor && (
+                ref is FunctionDescriptor && (
                         ref.fqNameSafe.asString().matches(Regex("^godot\\.core\\..*(ArrayOf|Array)\$"))
                                 || ref.fqNameSafe.asString().matches(Regex("^godot\\.core\\..*(dictionaryOf|Dictionary)\$"))
                                 || ref.findPackage().fqName.asString() == "kotlin.collections"

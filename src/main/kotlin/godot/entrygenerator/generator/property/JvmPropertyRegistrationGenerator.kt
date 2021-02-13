@@ -66,13 +66,19 @@ class JvmPropertyRegistrationGenerator : PropertyRegistrationGenerator() {
             generateDefaultValueProvider(registeredProperty, bindingContext, classSpecificRegistryBuilder)
         }
 
+        val typeFqNameWithNullability = if (registeredProperty.propertyDescriptor.type.isMarkedNullable) {
+            "${registeredProperty.propertyDescriptor.type.getJetTypeFqName(false)}?"
+        } else {
+            registeredProperty.propertyDescriptor.type.getJetTypeFqName(false)
+        }
+
         registerClassControlFlow
             .addStatement(
                 "property(%L,·%T,·%T,·%S,·%T,·%S,·${registeredProperty.propertyDescriptor.name}DefaultValue)",
                 getPropertyReference(registeredProperty.propertyDescriptor, className),
                 registeredProperty.propertyDescriptor.type.toParameterKtVariantType(),
                 registeredProperty.propertyDescriptor.type.toReturnKtVariantType(),
-                registeredProperty.propertyDescriptor.type.getJetTypeFqName(false),
+                typeFqNameWithNullability,
                 PropertyTypeHintProvider.provide(registeredProperty.propertyDescriptor, EntryGenerationType.JVM),
                 PropertyHintStringGeneratorProvider.provide(registeredProperty.propertyDescriptor, bindingContext, EntryGenerationType.JVM).getHintString()
             )
@@ -109,7 +115,7 @@ class JvmPropertyRegistrationGenerator : PropertyRegistrationGenerator() {
         }
 
         val defaultValuePropertySpec = PropertySpec
-            .builder("${registeredProperty.propertyDescriptor.name}DefaultValue", returnTypeClassName)
+            .builder("${registeredProperty.propertyDescriptor.name}DefaultValue", returnTypeClassName.copy(nullable = defaultValueStringTemplateValues.all { it is String && it == "null" }))
             .addModifiers(KModifier.OPEN)
             .initializer(defaultValueStringTemplate.replace(" ", "·"), *defaultValueStringTemplateValues)
 
