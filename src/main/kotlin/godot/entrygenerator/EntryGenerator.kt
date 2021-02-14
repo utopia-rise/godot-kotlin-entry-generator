@@ -231,10 +231,10 @@ object EntryGenerator {
             .filter { ktClass ->
                 var containingFilePath = ktClass.containingKtFile.virtualFile.path
                 srcDirs.forEach { srcDir ->
-                    containingFilePath = containingFilePath.removePrefix(srcDir)
+                    containingFilePath = containingFilePath.removePrefix(srcDir.replace(File.separatorChar, '/'))
                 }
-                containingFilePath = containingFilePath.removePrefix(File.separator).removeSuffix(".kt")
-                val packagePath = ktClass.fqName?.asString()?.replace(".", File.separator)
+                containingFilePath = containingFilePath.removePrefix("/").removeSuffix(".kt")
+                val packagePath = ktClass.fqName?.asString()?.replace('.', '/')
                 packagePath != containingFilePath
             }
             .toSet()
