@@ -231,6 +231,7 @@ object EntryGenerator {
             .filter { ktClass ->
                 var containingFilePath = ktClass.containingKtFile.virtualFile.path
                 srcDirs.forEach { srcDir ->
+                    // Replace separator by unix separator because of windows file system
                     containingFilePath = containingFilePath.removePrefix(srcDir.replace(File.separatorChar, '/'))
                 }
                 containingFilePath = containingFilePath.removePrefix("/").removeSuffix(".kt")
