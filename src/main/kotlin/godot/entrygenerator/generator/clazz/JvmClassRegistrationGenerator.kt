@@ -25,10 +25,13 @@ class JvmClassRegistrationGenerator : ClassRegistrationGenerator() {
     override fun provideRegisterClassControlFlow(classWithMembers: ClassWithMembers, classRegistryControlFlow: FunSpec.Builder, className: ClassName, superClass: String, godotBaseClass: String, isTool: Boolean): FunSpec.Builder {
         val classNameAsString = getClassNameAsString(classWithMembers.classDescriptor)
         EntryGenerator.registeredClassNames.add(classWithMembers.classDescriptor.fqNameSafe.asString() to classNameAsString)
+        val classResPath = requireNotNull(EntryGenerator.fqNamesToRePath[classWithMembers.classDescriptor.fqNameSafe.asString()]) {
+            "No resPath found for class ${classWithMembers.classDescriptor.fqNameSafe.asString()}"
+        }
         classRegistryControlFlow.beginControlFlow(
-            "registerClass<%T>(%T::class.qualifiedName!!,·%S,·%T::class,·$isTool,·%S,·%S)·{",
+            "registerClass<%T>(%S,·%S,·%T::class,·$isTool,·%S,·%S)·{",
             className,
-            className,
+            classResPath,
             superClass,
             className,
             godotBaseClass,

@@ -27,6 +27,10 @@ object EntryGenerator {
      * incremental builds
      */
     var psiClassesWithMembers: List<PsiClassWithMembers> = listOf()
+    /**
+     * Only needed on the JVM as for performance optimization we register the resPath instead of the fqName
+     */
+    var fqNamesToRePath: Map<String, String> = mapOf()
 
     fun generateEntryFiles(
         generationType: EntryGenerationType,
