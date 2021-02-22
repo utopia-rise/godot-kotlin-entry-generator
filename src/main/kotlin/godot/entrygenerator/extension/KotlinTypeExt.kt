@@ -1,6 +1,7 @@
 package godot.entrygenerator.extension
 
 import com.squareup.kotlinpoet.ClassName
+import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.asTypeName
 import godot.entrygenerator.EntryGenerationType
@@ -135,4 +136,11 @@ fun KotlinType.toParameterKtVariantType(): ClassName {
         supertypes().any { it.isAnyOrNullableAny() } -> ClassName("godot.core.VariantType", "OBJECT")
         else -> throw IllegalStateException("ParameterType $this cannot be handled by godot")
     }
+}
+
+fun KotlinType.toTypeName(): TypeName {
+    return ClassName(
+        getJetTypeFqName(false).substringBeforeLast("."),
+        getJetTypeFqName(false).substringAfterLast(".")
+    ).copy(nullable = isMarkedNullable)
 }

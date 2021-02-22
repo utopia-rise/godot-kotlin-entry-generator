@@ -6,6 +6,8 @@ import com.squareup.kotlinpoet.TypeSpec
 import godot.entrygenerator.EntryGenerationType
 import godot.entrygenerator.EntryGenerator
 import godot.entrygenerator.extension.getAnnotationValue
+import godot.entrygenerator.extension.toParameterKtVariantType
+import godot.entrygenerator.extension.toTypeName
 import godot.entrygenerator.generator.function.FunctionRegistrationGeneratorProvider
 import godot.entrygenerator.generator.property.PropertyRegistrationGeneratorProvider
 import godot.entrygenerator.generator.signal.SignalRegistrationGeneratorProvider
@@ -14,9 +16,12 @@ import godot.entrygenerator.model.REGISTER_CLASS_ANNOTATION
 import godot.entrygenerator.model.REGISTER_CLASS_ANNOTATION_NAME_ARGUMENT
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import godot.entrygenerator.model.RegisteredProperty
+import org.jetbrains.kotlin.descriptors.ClassConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
+import org.jetbrains.kotlin.js.descriptorUtils.getJetTypeFqName
 import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
+import org.jetbrains.kotlin.psi.psiUtil.getTextWithLocation
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 
@@ -38,27 +43,81 @@ class JvmClassRegistrationGenerator : ClassRegistrationGenerator() {
             classNameAsString
         )
 
-        classWithMembers.classDescriptor.constructors.forEach { classConstructorDescriptor ->
-            val ctorParamsCount = classConstructorDescriptor.valueParameters.size
+        registerConstructors(classWithMembers.classDescriptor.constructors, classRegistryControlFlow, className)
+        return classRegistryControlFlow
+    }
 
-            require(ctorParamsCount <= 5) { "A constructor cannot have more than 5 params in Godot! Reduce the param count for constructor:\n${classConstructorDescriptor.findPsi()?.text}" }
+    private fun registerConstructors(
+        constructors: Collection<ClassConstructorDescriptor>,
+        classRegistryControlFlow: FunSpec.Builder,
+        className: ClassName
+    ) {
+        require(
+            constructors
+                .groupBy { it.valueParameters.size }
+                .size == constructors.size
+        ) {
+            "$className contains multiple constructors with the same arg count. Constructor overloading is not yet supported!"
+        }
+
+        constructors.forEach { classConstructorDescriptor ->
+            val ctorParamsCount = classConstructorDescriptor.valueParameters.size
+            require(ctorParamsCount <= 5) { "A constructor cannot have more than 5 params in Godot! Reduce the param count for constructor:\n${classConstructorDescriptor.findPsi()?.getTextWithLocation()}" }
 
             if (ctorParamsCount == 0) {
                 classRegistryControlFlow.addStatement("constructor(%T(::%T))", ClassName("godot.core", "KtConstructor$ctorParamsCount"), className)
             } else {
-                val templateArgs = mutableListOf<ClassName>()
+                val templateArgs = mutableListOf<Any>()
                 val templateString = buildString {
-                    classConstructorDescriptor.valueParameters.forEach { valueParameter ->
-                        append(",·%T::as${valueParameter.type}")
-                        templateArgs.add(ClassName("godot.core", "KtVariant"))
+                    append("{")
+                    classConstructorDescriptor.valueParameters.forEachIndexed { index, valueParameter ->
+                        append("%L:·%T")
+                        templateArgs.add(valueParameter.name.asString())
+                        templateArgs.add(valueParameter.type.toTypeName().copy(nullable = false)) //setting nullables explicitly to false in case of type parameters for generic types, setting nullablility later
+
+                        if (valueParameter.type.arguments.isNotEmpty()) {
+                            append("<")
+                            valueParameter.type.arguments.forEach { typeProjection ->
+                                append("%T")
+                                templateArgs.add(typeProjection.type.toTypeName())
+                            }
+                            append(">")
+                        }
+
+                        if (valueParameter.type.isMarkedNullable) {
+                            append("?") //setting nullability now and not earlier in case of type parameters for generic types
+                        }
+
+                        if (index != classConstructorDescriptor.valueParameters.size - 1) {
+                            append(",·")
+                        }
+                    }
+
+                    append("·->·%T(")
+                    templateArgs.add(className)
+
+                    classConstructorDescriptor.valueParameters.forEachIndexed { index, valueParameter ->
+                        append(valueParameter.name.asString())
+                        if (index != classConstructorDescriptor.valueParameters.size - 1) {
+                            append(",·")
+                        }
+                    }
+                    append(")},·")
+
+                    classConstructorDescriptor.valueParameters.forEachIndexed { index, valueParameter ->
+                        append("%T·to·%L")
+                        templateArgs.add(valueParameter.type.toParameterKtVariantType())
+                        templateArgs.add(valueParameter.type.isMarkedNullable)
+
+                        if (index != classConstructorDescriptor.valueParameters.size - 1) {
+                            append(",·")
+                        }
                     }
                 }
 
-                classRegistryControlFlow.addStatement("constructor(%T(::%T$templateString))", ClassName("godot.core", "KtConstructor$ctorParamsCount"), className, *templateArgs.toTypedArray())
+                classRegistryControlFlow.addStatement("constructor(%T($templateString))", ClassName("godot.core", "KtConstructor$ctorParamsCount"), *templateArgs.toTypedArray())
             }
         }
-
-        return classRegistryControlFlow
     }
 
     private fun getClassNameAsString(classDescriptor: ClassDescriptor): String {
