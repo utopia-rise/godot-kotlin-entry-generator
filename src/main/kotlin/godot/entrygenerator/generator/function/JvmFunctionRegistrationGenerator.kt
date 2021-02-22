@@ -28,6 +28,7 @@ class JvmFunctionRegistrationGenerator : FunctionRegistrationGenerator() {
             if (functionDescriptor.valueParameters.isNotEmpty()) {
                 functionDescriptor.valueParameters.forEach { valueParameter ->
                     add(valueParameter.type.toParameterKtVariantType())
+                    add(valueParameter.type.isMarkedNullable)
                 }
                 functionDescriptor.valueParameters.forEach { valueParameter ->
                     add(ktFunctionArgumentClassName)
@@ -51,7 +52,7 @@ class JvmFunctionRegistrationGenerator : FunctionRegistrationGenerator() {
 
             if (functionDescriptor.valueParameters.isNotEmpty()) {
                 functionDescriptor.valueParameters.forEach { param ->
-                    append(",·%T") //Variant type
+                    append(",·%T·to·%L") //Variant type
                 }
                 functionDescriptor.valueParameters.forEach { _ ->
                     append(",·%T(%T,·%S,·%S)") //argument KtFunctionArgument
