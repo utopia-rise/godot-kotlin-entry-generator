@@ -28,7 +28,7 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 class JvmClassRegistrationGenerator : ClassRegistrationGenerator() {
 
     override fun provideRegisterClassControlFlow(classWithMembers: ClassWithMembers, classRegistryControlFlow: FunSpec.Builder, className: ClassName, superClass: String, godotBaseClass: String, isTool: Boolean): FunSpec.Builder {
-        val classNameAsString = getClassNameAsString(classWithMembers.classDescriptor)
+        val classNameAsString = getClassNameAsString(classWithMembers.classDescriptor).removePrefix("_")
         EntryGenerator.registeredClassNames.add(classWithMembers.classDescriptor.fqNameSafe.asString() to classNameAsString)
         val classResPath = requireNotNull(EntryGenerator.fqNamesToRePath[classWithMembers.classDescriptor.fqNameSafe.asString()]) {
             "No resPath found for class ${classWithMembers.classDescriptor.fqNameSafe.asString()}"
