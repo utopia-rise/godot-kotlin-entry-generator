@@ -11,16 +11,14 @@ import godot.entrygenerator.extension.toTypeName
 import godot.entrygenerator.generator.function.FunctionRegistrationGeneratorProvider
 import godot.entrygenerator.generator.property.PropertyRegistrationGeneratorProvider
 import godot.entrygenerator.generator.signal.SignalRegistrationGeneratorProvider
-import godot.entrygenerator.model.ClassWithMembers
-import godot.entrygenerator.model.REGISTER_CLASS_ANNOTATION
-import godot.entrygenerator.model.REGISTER_CLASS_ANNOTATION_NAME_ARGUMENT
+import godot.entrygenerator.model.*
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
-import godot.entrygenerator.model.RegisteredProperty
 import org.jetbrains.kotlin.descriptors.ClassConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.js.descriptorUtils.getJetTypeFqName
 import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.psiUtil.getTextWithLocation
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
@@ -52,15 +50,29 @@ class JvmClassRegistrationGenerator : ClassRegistrationGenerator() {
         classRegistryControlFlow: FunSpec.Builder,
         className: ClassName
     ) {
+        requireNotNull(constructors.firstOrNull { it.valueParameters.isEmpty() }) {
+            "$className does not contain a default constructor. A default constructor (no args) is needed for Godot"
+        }
+        val constructorsToRegister = constructors
+            .filter { classConstructorDescriptor ->
+                classConstructorDescriptor.annotations.hasAnnotation(FqName(REGISTER_CONSTRUCTOR_ANNOTATION)) ||
+                    classConstructorDescriptor.valueParameters.isEmpty()
+            }
+            .let { annotatedConstructors ->
+                if (annotatedConstructors.isEmpty()) {
+                    listOf(constructors.first { it.valueParameters.isEmpty() })
+                } else annotatedConstructors
+            }
+
         require(
-            constructors
+            constructorsToRegister
                 .groupBy { it.valueParameters.size }
-                .size == constructors.size
+                .size == constructorsToRegister.size
         ) {
-            "$className contains multiple constructors with the same arg count. Constructor overloading is not yet supported!"
+            "$className contains multiple registered constructors with the same arg count. Constructor overloading is not yet supported!"
         }
 
-        constructors.forEach { classConstructorDescriptor ->
+        constructorsToRegister.forEach { classConstructorDescriptor ->
             val ctorParamsCount = classConstructorDescriptor.valueParameters.size
             require(ctorParamsCount <= 5) { "A constructor cannot have more than 5 params in Godot! Reduce the param count for constructor:\n${classConstructorDescriptor.findPsi()?.getTextWithLocation()}" }
 
