@@ -160,8 +160,10 @@ object EntryGenerator {
             .filterNotNull()
             .filter { classFqName -> !classesFqNamesInCurrentCompilationRound.contains(classFqName) }
             .forEach { classFqName ->
-                val packagePath = classFqName.substringBeforeLast(".")
                 val classNameAsString = classFqName.substringAfterLast(".")
+                val packagePath = if (classNameAsString != classFqName) {
+                    classFqName.substringBeforeLast(".")
+                } else ""
                 mainEntryRegistryControlFlow.addStatement(
                     "%T().register(registry)",
                     ClassName("godot.$packagePath", "${classNameAsString}Registrar")
