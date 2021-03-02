@@ -4,7 +4,6 @@ import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.MemberName.Companion.member
 import godot.entrygenerator.extension.toParameterKtVariantType
 import godot.entrygenerator.extension.toReturnKtVariantType
-import org.jetbrains.kotlin.backend.common.serialization.findPackage
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.js.descriptorUtils.getJetTypeFqName
 
@@ -41,6 +40,7 @@ class JvmFunctionRegistrationGenerator : FunctionRegistrationGenerator() {
             add(ktFunctionArgumentClassName)
             add(returnType.toReturnKtVariantType())
             add(returnType.getJetTypeFqName(false))
+            add(getRpcModeEnum(functionDescriptor))
         }
     }
 
@@ -59,7 +59,7 @@ class JvmFunctionRegistrationGenerator : FunctionRegistrationGenerator() {
                 }
             }
 
-            append(",·%T(%T,·%S))") //return KtFunctionArgument
+            append(",·%T(%T,·%S),·%T.id.toInt())") //return KtFunctionArgument
         }
     }
 

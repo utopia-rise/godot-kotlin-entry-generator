@@ -38,7 +38,7 @@ class KotlinNativePropertyRegistrationGenerator : PropertyRegistrationGenerator(
             className.member(registeredProperty.propertyDescriptor.name.asString()).reference(),
             *defaultValueStringTemplateValues,
             shouldBeVisibleInEditor(registeredProperty.propertyDescriptor),
-            RpcModeAnnotationMapper.mapRpcModeAnnotationToClassName(getRpcModeEnum(registeredProperty.propertyDescriptor))
+            RpcModeAnnotationMapper.mapRpcModeAnnotationToClassName(getRpcModeEnum(registeredProperty.propertyDescriptor).toString())
         )
     }
 
@@ -53,7 +53,7 @@ class KotlinNativePropertyRegistrationGenerator : PropertyRegistrationGenerator(
             className.member(registeredProperty.propertyDescriptor.name.asString()).reference(),
             *defaultValueStringTemplateValues,
             shouldBeVisibleInEditor(registeredProperty.propertyDescriptor),
-            RpcModeAnnotationMapper.mapRpcModeAnnotationToClassName(getRpcModeEnum(registeredProperty.propertyDescriptor))
+            RpcModeAnnotationMapper.mapRpcModeAnnotationToClassName(getRpcModeEnum(registeredProperty.propertyDescriptor).toString())
         )
     }
 
@@ -69,7 +69,7 @@ class KotlinNativePropertyRegistrationGenerator : PropertyRegistrationGenerator(
                 className.member(registeredProperty.propertyDescriptor.name.asString()).reference(),
                 *defaultValueStringTemplateValues,
                 shouldBeVisibleInEditor(registeredProperty.propertyDescriptor),
-                RpcModeAnnotationMapper.mapRpcModeAnnotationToClassName(getRpcModeEnum(registeredProperty.propertyDescriptor))
+                RpcModeAnnotationMapper.mapRpcModeAnnotationToClassName(getRpcModeEnum(registeredProperty.propertyDescriptor).toString())
             )
     }
 
@@ -101,7 +101,7 @@ class KotlinNativePropertyRegistrationGenerator : PropertyRegistrationGenerator(
                 ), //property variant type
                 *defaultValueStringTemplateValues,
                 shouldBeVisibleInEditor(registeredProperty.propertyDescriptor),
-                RpcModeAnnotationMapper.mapRpcModeAnnotationToClassName(getRpcModeEnum(registeredProperty.propertyDescriptor)),
+                RpcModeAnnotationMapper.mapRpcModeAnnotationToClassName(getRpcModeEnum(registeredProperty.propertyDescriptor).toString()),
                 PropertyTypeHintProvider.provide(registeredProperty.propertyDescriptor, EntryGenerationType.KOTLIN_NATIVE),
                 hintString
             )
