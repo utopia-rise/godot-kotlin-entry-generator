@@ -9,6 +9,7 @@ import godot.entrygenerator.extension.toReturnKtVariantType
 import godot.entrygenerator.generator.property.defaultvalue.DefaultValueExtractorProvider
 import godot.entrygenerator.generator.property.hintstring.PropertyHintStringGeneratorProvider
 import godot.entrygenerator.generator.property.typehint.PropertyTypeHintProvider
+import godot.entrygenerator.mapper.RpcModeAnnotationMapper
 import godot.entrygenerator.model.RegisteredProperty
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.js.descriptorUtils.getJetTypeFqName
@@ -32,9 +33,10 @@ class JvmPropertyRegistrationGenerator : PropertyRegistrationGenerator() {
 
         registerClassControlFlow
             .addStatement(
-                "enumFlagProperty(%L,·${defaultValueStringTemplate.replace(" ", "·")})",
+                "enumFlagProperty(%L,·${defaultValueStringTemplate.replace(" ", "·")},·%T.id.toInt())",
                 getPropertyReference(registeredProperty.propertyDescriptor, className),
-                *defaultValueStringTemplateValues
+                *defaultValueStringTemplateValues,
+                getRpcModeEnum(registeredProperty.propertyDescriptor)
             )
     }
 
@@ -49,9 +51,10 @@ class JvmPropertyRegistrationGenerator : PropertyRegistrationGenerator() {
 
         registerClassControlFlow
             .addStatement(
-                "enumProperty(%L,·${defaultValueStringTemplate.replace(" ", "·")})",
+                "enumProperty(%L,·${defaultValueStringTemplate.replace(" ", "·")},·%T.id.toInt())",
                 getPropertyReference(registeredProperty.propertyDescriptor, className),
-                *defaultValueStringTemplateValues
+                *defaultValueStringTemplateValues,
+                getRpcModeEnum(registeredProperty.propertyDescriptor)
             )
     }
 
@@ -74,13 +77,14 @@ class JvmPropertyRegistrationGenerator : PropertyRegistrationGenerator() {
 
         registerClassControlFlow
             .addStatement(
-                "property(%L,·%T,·%T,·%S,·%T,·%S,·${registeredProperty.propertyDescriptor.name}DefaultValue)",
+                "property(%L,·%T,·%T,·%S,·%T,·%S,·${registeredProperty.propertyDescriptor.name}DefaultValue,·%T.id.toInt())",
                 getPropertyReference(registeredProperty.propertyDescriptor, className),
                 registeredProperty.propertyDescriptor.type.toParameterKtVariantType(),
                 registeredProperty.propertyDescriptor.type.toReturnKtVariantType(),
                 typeFqNameWithNullability,
                 PropertyTypeHintProvider.provide(registeredProperty.propertyDescriptor, EntryGenerationType.JVM),
-                PropertyHintStringGeneratorProvider.provide(registeredProperty.propertyDescriptor, bindingContext, EntryGenerationType.JVM).getHintString()
+                PropertyHintStringGeneratorProvider.provide(registeredProperty.propertyDescriptor, bindingContext, EntryGenerationType.JVM).getHintString(),
+                getRpcModeEnum(registeredProperty.propertyDescriptor)
             )
     }
 

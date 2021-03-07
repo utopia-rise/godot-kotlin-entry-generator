@@ -83,11 +83,11 @@ abstract class PropertyRegistrationGenerator {
             )
     }
 
-    protected fun getRpcModeEnum(propertyDescriptor: PropertyDescriptor): String {
+    protected fun getRpcModeEnum(propertyDescriptor: PropertyDescriptor): ClassName {
         val compilerRpcModeEnumRepresentation = getCompilerRpcModeEnumRepresentation(propertyDescriptor)
         val packagePath = compilerRpcModeEnumRepresentation.first.asString().replace("/", ".")
         val name = compilerRpcModeEnumRepresentation.second
-        return "$packagePath.$name"
+        return ClassName(packagePath, name.asString())
     }
 
     private fun getCompilerRpcModeEnumRepresentation(propertyDescriptor: PropertyDescriptor): Pair<ClassId, Name> {
