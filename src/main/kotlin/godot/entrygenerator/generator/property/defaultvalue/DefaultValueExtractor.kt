@@ -55,6 +55,12 @@ open class DefaultValueExtractor(
         return when {
             //normal constant expression like: val foo = 1
             expression is KtConstantExpression -> KtConstantExpressionExtractor.extract(expression)
+            //an example would be a negative number like: val foo = -1
+            expression is KtPrefixExpression && expression.baseExpression?.let {
+                getDefaultValueTemplateStringWithTemplateArguments(
+                    it
+                )
+            } != null -> KtPrefixExpressionExtractor.extract(expression)
             //string assignments but no string templations like ("${someVarToPutInString}"): val foo = "this is awesome"
             expression is KtStringTemplateExpression -> KtStringTemplateExpressionExtractor.extract(expression)
             expression is KtDotQualifiedExpression -> KtDotQualifiedExpressionExtractor.extract(bindingContext, expression)
