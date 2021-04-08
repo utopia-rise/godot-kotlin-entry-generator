@@ -83,7 +83,10 @@ class JvmPropertyRegistrationGenerator : PropertyRegistrationGenerator() {
                 registeredProperty.propertyDescriptor.type.toReturnKtVariantType(),
                 typeFqNameWithNullability,
                 PropertyTypeHintProvider.provide(registeredProperty.propertyDescriptor, EntryGenerationType.JVM),
-                PropertyHintStringGeneratorProvider.provide(registeredProperty.propertyDescriptor, bindingContext, EntryGenerationType.JVM).getHintString(),
+                PropertyHintStringGeneratorProvider
+                    .provide(registeredProperty.propertyDescriptor, bindingContext, EntryGenerationType.JVM)
+                    .getHintString()
+                    .replace("?", ""),
                 getRpcModeEnum(registeredProperty.propertyDescriptor)
             )
     }
