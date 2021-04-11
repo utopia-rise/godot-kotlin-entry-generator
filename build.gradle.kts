@@ -1,13 +1,27 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.ajoberstar.grgit.Commit
 
 plugins {
     kotlin("jvm")
     `maven-publish`
     id("org.ajoberstar.grgit") version "4.0.2"
+    id("com.utopia-rise.godot-publish")
 }
 
 group = "com.utopia-rise"
-version = "0.1.0-${DependenciesVersions.godotVersion}"
+
+val baseVersion = "0.1.0"
+
+val currentCommit: Commit = grgit.head()
+// check if the current commit is tagged
+var tagOnCurrentCommit = grgit.tag.list().firstOrNull { tag -> tag.commit.id == currentCommit.id }
+var releaseMode = tagOnCurrentCommit != null
+
+version = if (!releaseMode) {
+    "$baseVersion-${DependenciesVersions.godotVersion}-${currentCommit.abbreviatedId}-SNAPSHOT"
+} else {
+    requireNotNull(tagOnCurrentCommit).name
+}
 
 repositories {
     mavenCentral()
@@ -21,13 +35,6 @@ dependencies {
 }
 
 tasks {
-    val sourceJar by creating(Jar::class) {
-        archiveBaseName.set(project.name)
-        archiveVersion.set(project.version.toString())
-        archiveClassifier.set("sources")
-        from(sourceSets["main"].allSource)
-    }
-
     build {
         finalizedBy(publishToMavenLocal)
     }
@@ -41,24 +48,12 @@ publishing {
     publications {
         val godotEntryGenerator by creating(MavenPublication::class) {
             pom {
-                groupId = "${project.group}"
-                artifactId = project.name
-                version = "${project.version}"
+                name.set(project.name)
+                description.set("Godot Kotlin entry code generator.")
             }
+            artifactId = project.name
+            description = "Godot Kotlin entry code generator."
             from(components.getByName("java"))
-            artifact(tasks.getByName("sourceJar"))
         }
     }
-}
-
-val currentCommit = grgit.head()
-// check if the current commit is tagged
-var releaseMode = grgit.tag.list().firstOrNull { tag -> tag.commit.id == currentCommit.id } != null
-
-project.extra["artifacts"] = arrayOf("godotEntryGenerator")
-extra["releaseMode"] = releaseMode
-
-
-apply {
-    plugin(BintrayPublish::class.java)
 }
