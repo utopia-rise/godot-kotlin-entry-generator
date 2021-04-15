@@ -10,7 +10,7 @@ plugins {
 
 group = "com.utopia-rise"
 
-val baseVersion = "0.1.0"
+val baseVersion = "0.1.1"
 
 val currentCommit: Commit = grgit.head()
 // check if the current commit is tagged
