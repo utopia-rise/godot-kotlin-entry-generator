@@ -33,7 +33,7 @@ class JvmPropertyRegistrationGenerator : PropertyRegistrationGenerator() {
 
         registerClassControlFlow
             .addStatement(
-                "enumFlagProperty(%L,·${defaultValueStringTemplate.replace(" ", "·")},·%T.id.toInt())",
+                "enumFlagProperty(%L,·{·${defaultValueStringTemplate.replace(" ", "·")}·},·%T.id.toInt())",
                 getPropertyReference(registeredProperty.propertyDescriptor, className),
                 *defaultValueStringTemplateValues,
                 getRpcModeEnum(registeredProperty.propertyDescriptor)
@@ -51,7 +51,7 @@ class JvmPropertyRegistrationGenerator : PropertyRegistrationGenerator() {
 
         registerClassControlFlow
             .addStatement(
-                "enumProperty(%L,·${defaultValueStringTemplate.replace(" ", "·")},·%T.id.toInt())",
+                "enumProperty(%L,·{·${defaultValueStringTemplate.replace(" ", "·")}·},·%T.id.toInt())",
                 getPropertyReference(registeredProperty.propertyDescriptor, className),
                 *defaultValueStringTemplateValues,
                 getRpcModeEnum(registeredProperty.propertyDescriptor)
@@ -77,7 +77,7 @@ class JvmPropertyRegistrationGenerator : PropertyRegistrationGenerator() {
 
         registerClassControlFlow
             .addStatement(
-                "property(%L,·%T,·%T,·%S,·%T,·%S,·${registeredProperty.propertyDescriptor.name}DefaultValue,·%T.id.toInt())",
+                "property(%L,·%T,·%T,·%S,·%T,·%S,·{·${registeredProperty.propertyDescriptor.name}DefaultValue·},·%T.id.toInt())",
                 getPropertyReference(registeredProperty.propertyDescriptor, className),
                 registeredProperty.propertyDescriptor.type.toParameterKtVariantType(),
                 registeredProperty.propertyDescriptor.type.toReturnKtVariantType(),
@@ -124,7 +124,7 @@ class JvmPropertyRegistrationGenerator : PropertyRegistrationGenerator() {
         val defaultValuePropertySpec = PropertySpec
             .builder("${registeredProperty.propertyDescriptor.name}DefaultValue", returnTypeClassName.copy(nullable = defaultValueStringTemplateValues.all { it is String && it == "null" }))
             .addModifiers(KModifier.OPEN)
-            .initializer(defaultValueStringTemplate.replace(" ", "·"), *defaultValueStringTemplateValues)
+            .delegate("lazy·{·${defaultValueStringTemplate.replace(" ", "·")}·}", *defaultValueStringTemplateValues)
 
         if (registeredProperty.isOverriding) {
             defaultValuePropertySpec.addModifiers(KModifier.OVERRIDE)
